@@ -1,0 +1,11 @@
+{
+  "name" : "daar/termstyle",
+  "version" : "0.1.0",
+  "license" : "MIT",
+  "author" : "Darius Blaszyk <dhkblaszyk@gmail.com>",
+  "description" : "Colorful and styled terminal output for Free Pascal ",
+  "require" : {},
+  "require-dev" : {},
+  "bin" : [
+  ]
+}
