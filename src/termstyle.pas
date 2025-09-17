@@ -4,14 +4,14 @@ unit termstyle;
 
 interface
 
-function FormatText(const S: string): string;
+function ts(const S: string): string;
 
 // Helper printing functions
-procedure PrintError(const Msg: string);
-procedure PrintSuccess(const Msg: string);
-procedure PrintWarn(const Msg: string);
-procedure PrintInfo(const Msg: string);
-procedure PrintBanner(const OpenTag, CloseTag, Title: string);
+procedure tsError(const Msg: string);
+procedure tsSuccess(const Msg: string);
+procedure tsWarn(const Msg: string);
+procedure tsInfo(const Msg: string);
+procedure tsBanner(const OpenTag, CloseTag, Title: string);
 function Prompt(const Prefix: string): string;
 
 implementation
@@ -157,7 +157,7 @@ begin
     Result.Add(Part);
 end;
 
-function FormatText(const S: string): string;
+function ts(const S: string): string;
 type
   TTokenType = (ttText, ttOpenTag, ttCloseTag);
 
@@ -293,29 +293,33 @@ end;
 
 { === Helper Functions === }
 
-procedure PrintError(const Msg: string);
+procedure tsError(const Msg: string);
 begin
-  Writeln(FormatText('<bright_white bg:bright_red bold> ERROR </bright_white> ' + Msg));
+  Writeln(ts('<bright_white bg:bright_red bold> ERROR </bright_white> ' + Msg));
+  writeln;
 end;
 
-procedure PrintSuccess(const Msg: string);
+procedure tsSuccess(const Msg: string);
 begin
-  Writeln(FormatText('<bright_white bg:bright_green bold> SUCCESS </bright_white> '
+  Writeln(ts('<bright_white bg:bright_green bold> SUCCESS </bright_white> '
     + Msg));
+  writeln;
 end;
 
-procedure PrintWarn(const Msg: string);
+procedure tsWarn(const Msg: string);
 begin
-  Writeln(FormatText('<bright_white bg:bright_yellow bold> WARNING </bright_white> '
+  Writeln(ts('<bright_white bg:bright_yellow bold> WARNING </bright_white> '
     + Msg));
+  writeln;
 end;
 
-procedure PrintInfo(const Msg: string);
+procedure tsInfo(const Msg: string);
 begin
-  Writeln(FormatText('<bright_white bg:bright_blue bold> INFO </bright_white> ' + Msg));
+  Writeln(ts('<bright_white bg:bright_blue bold> INFO </bright_white> ' + Msg));
+  writeln;
 end;
 
-procedure PrintBanner(const OpenTag, CloseTag, Title: string);
+procedure tsBanner(const OpenTag, CloseTag, Title: string);
 var
   TotalWidth, Padding, i: integer;
   Line: string;
@@ -330,7 +334,7 @@ begin
   Line := '';
   for i := 1 to TotalWidth do
     Line := Line + ' ';
-  Writeln(FormatText(OpenTag + Line + CloseTag));
+  Writeln(ts(OpenTag + Line + CloseTag));
 
   // Title line, centered
   Line := '';
@@ -339,19 +343,19 @@ begin
   Line := Line + Title;
   while Length(Line) < TotalWidth do
     Line := Line + ' ';
-  Writeln(FormatText(OpenTag + Line + CloseTag));
+  Writeln(ts(OpenTag + Line + CloseTag));
 
   // Bottom line (spaces with background)
   Line := '';
   for i := 1 to TotalWidth do
     Line := Line + ' ';
-  Writeln(FormatText(OpenTag + Line + CloseTag));
+  Writeln(ts(OpenTag + Line + CloseTag));
 end;
 
 
 function Prompt(const Prefix: string): string;
 begin
-  Write(FormatText('<bright_magenta>' + Prefix + '></bright_magenta> '));
+  Write(ts('<bright_magenta>' + Prefix + '></bright_magenta> '));
   ReadLn(Result);
 end;
 
