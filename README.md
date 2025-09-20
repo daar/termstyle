@@ -10,14 +10,17 @@ TermStyle is a Pascal library to add **colorful and styled terminal output** to 
 Wrap text in `<tag>` and `</tag>`:
 
 ```pascal
-Writeln(FormatText('<bold><red>Important!</red></bold>'));
-Writeln(FormatText('<green bg:bright_black>Green text on dark background</green>'));
+uses
+  TermStyle;
+
+Writeln(parse('<div class="font-bold text-red">Important!</div>'));
+Writeln(parse('<div class="text-green-500 bg-gray-800">Green text on dark background</div>'));
 ````
 
 You can combine multiple styles:
 
 ```pascal
-Writeln(FormatText('<bold><underline><blue>Bold, Underlined, Blue</blue></underline></bold>'));
+Writeln(parse('<div class="font-bold underline text-blue-500">Bold, Underlined, Blue</div>'));
 ```
 
 
@@ -29,19 +32,20 @@ program TermStyleBasicDemo;
 {$mode objfpc}{$H+}
 
 uses
-  SysUtils, termstyle;
+  SysUtils, 
+  TermStyle;
 
 begin
-  PrintInfo('Welcome to the TermStyle demo! This showcases colorful terminal styling.');
-  PrintSuccess('Installation completed successfully!');
-  PrintWarn('Low disk space detected. Consider cleaning up.');
-  PrintError('Failed to connect to the server. Please check your network.');
+  tsInfo('Welcome to the TermStyle demo! This showcases colorful terminal styling.');
+  tsSuccess('Installation completed successfully!');
+  tsWarn('Low disk space detected. Consider cleaning up.');
+  tsError('Failed to connect to the server. Please check your network.');
 
-  Writeln(FormatText('<bold><underline>Bold & Underlined</underline></bold>'));
-  Writeln(FormatText('<red>Red text</red> <green>Green text</green> <blue>Blue text</blue>'));
-  Writeln(FormatText('<bg:bright_yellow black>Black on bright yellow background</bg:bright_yellow>'));
-  Writeln(FormatText('<italic><bright_magenta>Italic bright magenta text</bright_magenta></italic>'));
-  Writeln(FormatText('<reversed>Reversed colors text</reversed>'));
+  Writeln(parse('<div class="font-bold font-underline">Bold & Underlined</div>'));
+  Writeln(parse('<div><div class="text-red-500">Red text </div><div class="text-green-500">Green text </div><div class="text-blue-500">Blue text </div></div>'));
+  Writeln(parse('<div><div class="bg-yellow-300 text-black">Black on bright yellow background</div></div>'));
+  Writeln(parse('<div><div class="text-pink-400 italic">Italic bright magenta text</div></div>'));
+  Writeln(parse('<div class="invert">Reversed colors text</div>'));
 end.
 ```
 
