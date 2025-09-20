@@ -87,6 +87,26 @@ procedure TraverseNode(Node: TDOMNode; ParentHtmlNode: THtmlNode);
 
 implementation
 
+function HtmlDecode(const S: string): string;
+const
+  Entities: array[0..0] of record
+      name: string;
+      char: string;
+      end
+  = (
+    (name: '&;'; char: '&')
+    );
+var
+  ResultStr: string;
+  i: integer;
+begin
+  ResultStr := S;
+  for i := Low(Entities) to High(Entities) do
+    ResultStr := StringReplace(ResultStr, Entities[i].name, Entities[i].char,
+      [rfReplaceAll]);
+  Result := ResultStr;
+end;
+
 { TClassEnumerator }
 
 constructor TClassEnumerator.Create(const AText: string);
@@ -276,7 +296,7 @@ end;
 constructor THtmlText.Create(const AClass, AText: string);
 begin
   inherited Create(AClass);
-  Text := AText;
+  Text := HtmlDecode(AText);
 end;
 
 function THtmlText.Render: string;
