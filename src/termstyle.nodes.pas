@@ -50,7 +50,6 @@ type
 
   THtmlBody = class(THtmlNode)
   public
-    constructor Create(const AClass: string);
     function Render: string; override;
   end;
 
@@ -63,14 +62,12 @@ type
     function Render: string; override;
   end;
 
-  { Div node }
-  THtmlDiv = class(THtmlNode)
-  public
-    Classes: TStringList;
-    constructor Create(const AClass: string);
-    destructor Destroy; override;
-    function Render: string; override;
-  end;
+  { THtmlDiv }
+  THtmlDiv = class(THtmlNode);
+
+  { THtmlSpan }
+
+  THtmlSpan = class(THtmlNode);
 
   { THtmlLink }
 
@@ -78,7 +75,6 @@ type
   public
     Href: string;
     constructor Create(const AClass, AHref: string);
-    destructor Destroy; override;
     function Render: string; override;
   end;
 
@@ -240,11 +236,6 @@ end;
 
 { THtmlBody }
 
-constructor THtmlBody.Create(const AClass: string);
-begin
-  inherited Create(AClass);
-end;
-
 function THtmlBody.Render: string;
 var
   i: integer;
@@ -267,11 +258,6 @@ begin
 
   Style.FG := THtmlColor.FromTailwind('blue-500');
   Include(Style.Attrs, taUnderline); // underline
-end;
-
-destructor THtmlLink.Destroy;
-begin
-  inherited Destroy;
 end;
 
 function THtmlLink.Render: string;
@@ -308,24 +294,6 @@ begin
   Result += inherited Render;
 end;
 
-{ THtmlDiv }
-
-constructor THtmlDiv.Create(const AClass: string);
-begin
-  inherited Create(AClass);
-end;
-
-destructor THtmlDiv.Destroy;
-begin
-  Classes.Free;
-  inherited Destroy;
-end;
-
-function THtmlDiv.Render: string;
-begin
-  Result := inherited Render;
-end;
-
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
 var
   Elem: TDOMElement;
@@ -342,6 +310,8 @@ begin
     Result := THtmlBody.Create('')
   else if lowercase(Elem.TagName) = 'div' then
     Result := THtmlDiv.Create(Elem.GetAttribute('class'))
+  else if lowercase(Elem.TagName) = 'span' then
+    Result := THtmlSpan.Create(Elem.GetAttribute('class'))
   else if lowercase(Elem.TagName) = 'a' then
     Result := THtmlLink.Create(Elem.GetAttribute('class'), Elem.GetAttribute('href'));
 
