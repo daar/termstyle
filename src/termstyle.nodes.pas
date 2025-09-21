@@ -53,8 +53,8 @@ type
     function Render: string; override;
   end;
 
+  { THtmlText }
 
-  { Text node }
   THtmlText = class(THtmlNode)
   public
     Text: string;
@@ -63,19 +63,31 @@ type
   end;
 
   { THtmlDiv }
+
   THtmlDiv = class(THtmlNode);
 
   { THtmlSpan }
 
   THtmlSpan = class(THtmlNode);
 
-  { THtmlLink }
+  { THtmlP }
 
-  THtmlLink = class(THtmlNode)
+  THtmlP = class(THtmlNode);
+
+  { THtmlA }
+
+  THtmlA = class(THtmlNode)
   public
     Href: string;
     constructor Create(const AClass, AHref: string);
     function Render: string; override;
+  end;
+
+  { THtmlS }
+
+  THtmlS = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
   end;
 
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
@@ -186,6 +198,7 @@ begin
   case AClass of
     // attributes
     'font-bold': include(Style.Attrs, taBold);
+    'font-normal': exclude(Style.Attrs, taBold);
     'font-light': include(Style.Attrs, taLight);
     'italic': include(Style.Attrs, taItalic);
     'underline': include(Style.Attrs, taUnderline);
@@ -248,9 +261,9 @@ begin
   end;
 end;
 
-{ THtmlLink }
+{ THtmlA }
 
-constructor THtmlLink.Create(const AClass, AHref: string);
+constructor THtmlA.Create(const AClass, AHref: string);
 begin
   inherited Create(AClass);
 
@@ -260,7 +273,7 @@ begin
   Include(Style.Attrs, taUnderline); // underline
 end;
 
-function THtmlLink.Render: string;
+function THtmlA.Render: string;
 var
   childRendered: string;
   i: integer;
@@ -275,6 +288,15 @@ begin
     #27']8;;' + Href + #7 +  // start hyperlink
     childRendered +          // rendered children (text + styled content)
     #27']8;;'#7;             // end hyperlink
+end;
+
+{ THtmlS }
+
+constructor THtmlS.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Include(Style.Attrs, taStrike);
 end;
 
 { THtmlText }
@@ -312,8 +334,12 @@ begin
     Result := THtmlDiv.Create(Elem.GetAttribute('class'))
   else if lowercase(Elem.TagName) = 'span' then
     Result := THtmlSpan.Create(Elem.GetAttribute('class'))
+  else if lowercase(Elem.TagName) = 'p' then
+    Result := THtmlSpan.Create(Elem.GetAttribute('class'))
   else if lowercase(Elem.TagName) = 'a' then
-    Result := THtmlLink.Create(Elem.GetAttribute('class'), Elem.GetAttribute('href'));
+    Result := THtmlA.Create(Elem.GetAttribute('class'), Elem.GetAttribute('href'))
+  else if lowercase(Elem.TagName) = 's' then
+    Result := THtmlS.Create('');
 
   // Unknown tags → return nil, so TraverseNode will treat them as literal text
 end;
