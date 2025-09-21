@@ -14,47 +14,47 @@ begin
   writeln;
 
   // --- Banner ---
-  tsBanner('<div class="text-white bg-blue-400 font-bold">', '</div>',
+  banner('<div class="text-white bg-blue-400 font-bold">', '</div>',
     'TERMSTYLE DEMO CLI');
   writeln;
 
   // --- Info block ---
-  tsInfo('Welcome to the TermStyle demo! This showcases colorful terminal styling.');
+  info('Welcome to the TermStyle demo! This showcases colorful terminal styling.');
 
   // --- Success message ---
-  tsSuccess('Installation completed successfully!');
+  success('Installation completed successfully!');
 
   // --- Warning message ---
-  tsWarn('Low disk space detected. Consider cleaning up.');
+  warning('Low disk space detected. Consider cleaning up.');
 
   // --- Error message ---
-  tsError('Failed to connect to the server. Please check your network.');
+  error('Failed to connect to the server. Please check your network.');
   writeln;
 
   // --- Styled text examples ---
-  Writeln(parse('<div class="font-bold font-underline">Bold & Underlined</div>'));
-  Writeln(parse(
+  writeln(render('<div class="font-bold font-underline">Bold & Underlined</div>'));
+  writeln(render(
     '<div><div class="text-red-500">Red text </div><div class="text-green-500">Green text </div><div class="text-blue-500">Blue text </div></div>'));
-  Writeln(parse(
+  writeln(render(
     '<div><div class="bg-yellow-300 text-black">Black on bright yellow background</div></div>'));
-  Writeln(parse('<div><div class="text-pink-400 italic">Italic bright magenta text</div></div>'));
-  Writeln(parse('<div class="invert">Reversed colors text</div>'));
+  writeln(render('<div><div class="text-pink-400 italic">Italic bright magenta text</div></div>'));
+  writeln(render('<div class="invert">Reversed colors text</div>'));
 
   // --- Simulated menu ---
-  Writeln('');
-  Writeln(parse('<div class="text-cyan-400">Available Commands:</div>'));
-  Writeln(parse('  <div class="text-green-500">install</div> Install the package'));
-  Writeln(parse('  <div class="text-yellow-500">update</div>  Update to latest version'));
-  Writeln(parse('  <div class="text-red-500">remove</div>  Remove the package'));
-  Writeln(parse('  <div class="text-purple-500">help</div>    Show help'));
+  writeln('');
+  writeln(render('<div class="text-cyan-400">Available Commands:</div>'));
+  writeln(render('  <div class="text-green-500">install</div> Install the package'));
+  writeln(render('  <div class="text-yellow-500">update</div>  Update to latest version'));
+  writeln(render('  <div class="text-red-500">remove</div>  Remove the package'));
+  writeln(render('  <div class="text-purple-500">help</div>    Show help'));
 
 
   // --- Prompt example ---
-  Writeln('');
-  Write(parse('<div class="text-pink-400">Enter command></div> '));
-  WriteLn('<user input simulation>');  // just for screenshot
+  writeln('');
+  write(render('<div class="text-pink-400">Enter command></div> '));
+  writeLn('<user input simulation>');  // just for screenshot
   writeln;
 
   // --- Footer ---
-  tsBanner('<div class="bg-blue-400 text-white font-bold">', '</div>', 'END OF DEMO');
+  banner('<div class="bg-blue-400 text-white font-bold">', '</div>', 'END OF DEMO');
 end.

@@ -4,15 +4,16 @@ unit TermStyle;
 
 interface
 
-function parse(const S: string): string;
+function render(const S: string): string;
 
 // Helper printing functions
-procedure tsError(const Msg: string);
-procedure tsSuccess(const Msg: string);
-procedure tsWarn(const Msg: string);
-procedure tsInfo(const Msg: string);
-procedure tsBanner(const OpenTag, CloseTag, Title: string);
-function Prompt(const Prefix: string): string;
+procedure error(const Msg: string);
+procedure success(const Msg: string);
+procedure warning(const Msg: string);
+procedure info(const Msg: string);
+procedure banner(const OpenTag, CloseTag, Title: string);
+
+function prompt(const Msg: string): string;
 
 implementation
 
@@ -23,7 +24,7 @@ uses
   DOM_HTML,
   TermStyle.Nodes;
 
-function parse(const S: string): string;
+function render(const S: string): string;
 var
   Doc: THTMLDocument;
   WrappedData: string;
@@ -31,7 +32,7 @@ var
 begin
   Doc := THTMLDocument.Create;
   try
-    // Parse the HTML snippet
+    // Render the HTML snippet
     WrappedData := '<body>' + S + '</body>';
     ReadHTMLFile(Doc, TStringStream.Create(WrappedData));
 
@@ -48,31 +49,31 @@ end;
 
 { === Helper Functions === }
 
-procedure tsError(const Msg: string);
+procedure error(const Msg: string);
 begin
-  Writeln(parse('<div><div class="bg-red-700 text-red-100 font-bold"> ERROR </div> ' + Msg + '</div>'));
+  writeln(render('<div><div class="bg-red-700 text-red-100 font-bold"> ERROR </div> ' + Msg + '</div>'));
   writeln;
 end;
 
-procedure tsSuccess(const Msg: string);
+procedure success(const Msg: string);
 begin
-  Writeln(parse('<div><div class="bg-green-700 text-green-100 font-bold"> SUCCESS </div> ' + Msg + '</div>'));
+  writeln(render('<div><div class="bg-green-700 text-green-100 font-bold"> SUCCESS </div> ' + Msg + '</div>'));
   writeln;
 end;
 
-procedure tsWarn(const Msg: string);
+procedure warning(const Msg: string);
 begin
-  Writeln(parse('<div><div class="bg-yellow-700 text-yellow-100 font-bold"> WARNING </div> ' + Msg + '</div>'));
+  writeln(render('<div><div class="bg-yellow-700 text-yellow-100 font-bold"> WARNING </div> ' + Msg + '</div>'));
   writeln;
 end;
 
-procedure tsInfo(const Msg: string);
+procedure info(const Msg: string);
 begin
-  Writeln(parse('<div class="bg-sky-700 text-sky-100 font-bold"> INFO </div> ' + Msg));
+  writeln(render('<div class="bg-sky-700 text-sky-100 font-bold"> INFO </div> ' + Msg));
   writeln;
 end;
 
-procedure tsBanner(const OpenTag, CloseTag, Title: string);
+procedure banner(const OpenTag, CloseTag, Title: string);
 var
   TotalWidth, Padding, i: integer;
   Line: string;
@@ -87,7 +88,7 @@ begin
   Line := '';
   for i := 1 to TotalWidth do
     Line := Line + ' ';
-  Writeln(parse(OpenTag + Line + CloseTag));
+  writeln(render(OpenTag + Line + CloseTag));
 
   // Title line, centered
   Line := '';
@@ -96,19 +97,19 @@ begin
   Line := Line + Title;
   while Length(Line) < TotalWidth do
     Line := Line + ' ';
-  Writeln(parse(OpenTag + Line + CloseTag));
+  writeln(render(OpenTag + Line + CloseTag));
 
   // Bottom line (spaces with background)
   Line := '';
   for i := 1 to TotalWidth do
     Line := Line + ' ';
-  Writeln(parse(OpenTag + Line + CloseTag));
+  writeln(render(OpenTag + Line + CloseTag));
 end;
 
 
-function Prompt(const Prefix: string): string;
+function prompt(const Msg: string): string;
 begin
-  Write(parse('<div class="text-fuchsia-500">' + Prefix + '></div> '));
+  write(render('<div class="text-fuchsia-500">' + Msg + '></div> '));
   ReadLn(Result);
 end;
 
