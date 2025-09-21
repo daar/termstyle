@@ -97,9 +97,23 @@ type
     constructor Create(const AClass: string);
   end;
 
+  { THtmlStrong }
+
+  THtmlStrong = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
+  end;
+
   { THtmlI }
 
   THtmlI = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
+  end;
+
+  { THtmlEm }
+
+  THtmlEm = class(THtmlNode)
   public
     constructor Create(const AClass: string);
   end;
@@ -321,9 +335,27 @@ begin
   Include(Style.Attrs, taBold);
 end;
 
+{ THtmlStrong }
+
+constructor THtmlStrong.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Include(Style.Attrs, taBold);
+end;
+
 { THtmlI }
 
 constructor THtmlI.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Include(Style.Attrs, taItalic);
+end;
+
+{ THtmlEm }
+
+constructor THtmlEm.Create(const AClass: string);
 begin
   inherited Create(AClass);
 
@@ -373,7 +405,11 @@ begin
     Result := THtmlS.Create('')
   else if lowercase(Elem.TagName) = 'b' then
     Result := THtmlB.Create('')
+  else if lowercase(Elem.TagName) = 'strong' then
+    Result := THtmlB.Create('')
   else if lowercase(Elem.TagName) = 'i' then
+    Result := THtmlI.Create('');
+  else if lowercase(Elem.TagName) = 'em' then
     Result := THtmlI.Create('');
 
   // Unknown tags → return nil, so TraverseNode will treat them as literal text
