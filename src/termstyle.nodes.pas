@@ -299,7 +299,6 @@ begin
   Href := AHref;
 
   Style.FG := THtmlColor.FromTailwind('blue-500');
-  Include(Style.Attrs, taUnderline); // underline
 end;
 
 function THtmlA.Render: string;
@@ -408,7 +407,7 @@ begin
   else if lowercase(Elem.TagName) = 'strong' then
     Result := THtmlB.Create('')
   else if lowercase(Elem.TagName) = 'i' then
-    Result := THtmlI.Create('');
+    Result := THtmlI.Create('')
   else if lowercase(Elem.TagName) = 'em' then
     Result := THtmlI.Create('');
 
