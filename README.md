@@ -1,5 +1,3 @@
-Here’s a more polished and professional version of your wording:
-
 # TermStyle
 
 **TermStyle** brings **colorful, styled output** to your CLI applications with the familiar **[Tailwind CSS](https://tailwindcss.com/) API**. It allows building a **beautiful and expressive terminal** with ease.
