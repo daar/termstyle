@@ -75,8 +75,6 @@ All the elements have the capability to use the `class` attribute.
 
 The `<div>` element can be used as a block type element.
 
-**Default Styles**: `block`
-
 ```pascal
 render('<div>This is a div element.</div>');
 ```
