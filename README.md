@@ -1,6 +1,10 @@
+Here’s a more polished and professional version of your wording:
+
 # TermStyle
 
-**TermStyle** adds **colorful and styled terminal output** to CLI applications. It supports the **[Tailwind CSS](https://tailwindcss.com/)** API, but for the terminal. **TermStyle** is insired by [Termwind](https://github.com/nunomaduro/termwind). 
+**TermStyle** brings **colorful, styled output** to your CLI applications with the familiar **[Tailwind CSS](https://tailwindcss.com/) API**. It allows building a **beautiful and expressive terminal** with ease.
+
+> TermStyle is inspired by [Termwind](https://github.com/nunomaduro/termwind).
 
 <p align="center">
     <img src="img/screenshot.png" alt="Termwind example" height="300">
