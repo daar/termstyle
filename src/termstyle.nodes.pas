@@ -90,6 +90,20 @@ type
     constructor Create(const AClass: string);
   end;
 
+  { THtmlB }
+
+  THtmlB = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
+  end;
+
+  { THtmlI }
+
+  THtmlI = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
+  end;
+
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
 procedure TraverseNode(Node: TDOMNode; ParentHtmlNode: THtmlNode);
 
@@ -205,6 +219,7 @@ begin
     'animate-pulse': include(Style.Attrs, taBlink);
     'invert': include(Style.Attrs, taInverse);
     'sr-only': include(Style.Attrs, taHidden);
+    'invisible': include(Style.Attrs, taHidden);
     'line-through': include(Style.Attrs, taStrike);
     else
       // Check for colors
@@ -299,6 +314,22 @@ begin
   Include(Style.Attrs, taStrike);
 end;
 
+constructor THtmlB.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Include(Style.Attrs, taBold);
+end;
+
+{ THtmlI }
+
+constructor THtmlI.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Include(Style.Attrs, taItalic);
+end;
+
 { THtmlText }
 
 constructor THtmlText.Create(const AClass, AText: string);
@@ -339,7 +370,11 @@ begin
   else if lowercase(Elem.TagName) = 'a' then
     Result := THtmlA.Create(Elem.GetAttribute('class'), Elem.GetAttribute('href'))
   else if lowercase(Elem.TagName) = 's' then
-    Result := THtmlS.Create('');
+    Result := THtmlS.Create('')
+  else if lowercase(Elem.TagName) = 'b' then
+    Result := THtmlB.Create('')
+  else if lowercase(Elem.TagName) = 'i' then
+    Result := THtmlI.Create('');
 
   // Unknown tags → return nil, so TraverseNode will treat them as literal text
 end;
