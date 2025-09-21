@@ -1,5 +1,16 @@
 {
   "name" : "daar/termstyle",
   "version" : "0.1.0",
-  "requires" : {}
+  "requires" : {
+    "daar/taplib" : {
+      "constraint" : "^0.0",
+      "version" : "v0.0.1",
+      "commit" : "abd6e345d3e2a35fefea4e1ebc2242eedd97d19f",
+      "repo" : "",
+      "source" : "",
+      "dev" : true,
+      "bin" : {},
+      "requires" : {}
+    }
+  }
 }

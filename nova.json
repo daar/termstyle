@@ -5,7 +5,9 @@
   "author" : "Darius Blaszyk <dhkblaszyk@gmail.com>",
   "description" : "Colorful and styled terminal output for Free Pascal ",
   "require" : {},
-  "require-dev" : {},
+  "require-dev" : {
+    "daar/taplib" : "^0.0"
+  },
   "bin" : [
   ]
 }
