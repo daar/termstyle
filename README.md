@@ -5,7 +5,7 @@
 > TermStyle is inspired by [Termwind](https://github.com/nunomaduro/termwind).
 
 <p align="center">
-    <img src="img/screenshot.png" alt="Termwind example" height="300">
+    <img src="img/screenshot.png" alt="TermStyle example" height="300">
 </p>
 
 ## Installation
@@ -94,7 +94,7 @@ The `<span>` element can be used as an inline text container.
 ```pascal
 render(
     '<p>' +
-    'This is a CLI app built with <span class="text-green-300">Termwind</span>.' +
+    'This is a CLI app built with <span class="text-green-300">TermStyle</span>.' +
     '</p>'
   );
 ```
@@ -108,7 +108,7 @@ The `<a>` element can be used as a hyperlink. It allows to use the `href` attrib
 ```pascal
 render(
     '<p>' +
-    'This is a CLI app built with Termwind. <a href="/">Click here to open</a>' +
+    'This is a CLI app built with TermStyle. <a href="/">Click here to open</a>' +
     '</p>'
   );
 ```
@@ -122,7 +122,7 @@ The `<b>`and `<strong>` elements can be used to mark the text as **bold**.
 ```pascal
 render(
     '<p>' +
-    'This is a CLI app built with <b>Termwind</b>' +
+    'This is a CLI app built with <b>TermStyle</b>' +
     '</p>'
   );
 ```
@@ -136,7 +136,7 @@ The `<i>` and `<em>` elements can be used to mark the text as *italic*.
 ```pascal
 render(
     '<p>' +
-    'This is a CLI app built with <i>Termwind</i>.' +
+    'This is a CLI app built with <i>TermStyle</i>.' +
     '</p>'
   );
 ```
@@ -150,7 +150,7 @@ The `<s>`  element can be used to add a ~~line through~~ the text.
 ```pascal
 render(
     '<p>' +
-    'This is a CLI app built with <s>Termwind</s>.' +
+    'This is a CLI app built with <s>TermStyle</s>.' +
     '</p>'
   );
 ```
