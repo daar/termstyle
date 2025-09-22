@@ -11,7 +11,7 @@ procedure error(const Msg: string);
 procedure success(const Msg: string);
 procedure warning(const Msg: string);
 procedure info(const Msg: string);
-procedure banner(const OpenTag, CloseTag, Title: string);
+procedure banner(const Title: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
 
 function prompt(const Msg: string): string;
 
@@ -83,11 +83,14 @@ begin
   writeln;
 end;
 
-procedure banner(const OpenTag, CloseTag, Title: string);
+procedure banner(const Title: string; const AClasses: string);
 var
   TotalWidth, Padding, i: integer;
-  Line: string;
+  Line, OpenTag, CloseTag: string;
 begin
+  OpenTag := '<span class="' + AClasses + '">';
+  CloseTag := '</span>';
+
   TotalWidth := 50; // total banner width
   if Length(Title) >= TotalWidth then
     Padding := 0

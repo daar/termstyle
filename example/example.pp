@@ -35,7 +35,7 @@ begin
 
   // Menu loop
   repeat
-    banner('<div class="text-white bg-blue-400 font-bold>', '</div>', 'Main Menu');
+    banner('Main Menu', 'text-white bg-blue-400 font-bold');
     ShowMenu;
     writeln;
 
@@ -69,6 +69,6 @@ begin
   until choice = '4';
 
   // Exit banner
-  banner('<div class="text-white bg-green-400">', '</div>', 'Thank you for using TermStyle!');
+  banner('Thank you for using TermStyle!');
 end.
 

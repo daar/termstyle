@@ -14,8 +14,7 @@ begin
   writeln;
 
   // --- Banner ---
-  banner('<div class="text-white bg-blue-400 font-bold">', '</div>',
-    'TERMSTYLE DEMO CLI');
+  banner('TERMSTYLE DEMO CLI', 'text-white bg-blue-400 font-bold');
   writeln;
 
   // --- Info block ---
@@ -56,5 +55,5 @@ begin
   writeln;
 
   // --- Footer ---
-  banner('<div class="bg-blue-400 text-white font-bold">', '</div>', 'END OF DEMO');
+  banner('END OF DEMO', 'bg-blue-400 text-white font-bold');
 end.
