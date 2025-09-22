@@ -11,7 +11,7 @@ procedure test_bg_color;
 begin
   assert_equal(
     'bg-blue-500',
-    #27'[48;2;59;130;246mBlue bg'#27'[0m'#27'[0m'#27'[48;2;59;130;246m'#27'[0m'#27'[0m',
+    #$1B'[48;2;59;130;246mBlue bg'#$1B'[0m',
     render('<span class="bg-blue-500">Blue bg</span>')
   );
 end;
@@ -19,44 +19,43 @@ end;
 procedure test_text_color;
 begin
   assert_equal('text-green-300',
-    #$1B'[38;2;134;239;172mGreen text'#$1B'[0m'#$1B'[0m'#$1B'[38;2;134;239;172m'#$1B'[0m'#$1B'[0m',
+    #$1B'[38;2;134;239;172mGreen text'#$1B'[0m',
     render('<span class="text-green-300">Green text</span>'));
 end;
 
 procedure test_font_bold;
 begin
   assert_equal('font-bold',
-    #$1B'[1mBold text'#$1B'[0m'#$1B'[0m'#$1B'[1m'#$1B'[0m'#$1B'[0m',
+    #$1B'[1mBold text'#$1B'[0m',
     render('<span class="font-bold">Bold text</span>'));
 end;
 
 procedure test_font_normal;
 begin
-  render('<span class="font-normal">Normal text</span>');
   assert_equal('font-normal',
-    'Normal text'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+    'Normal text'#$1B'[0m',
     render('<span class="font-normal">Normal text</span>'));
 end;
 
 procedure test_font_italic;
 begin
   assert_equal('italic',
-    #$1B'[3mItalic text'#$1B'[0m'#$1B'[0m'#$1B'[3m'#$1B'[0m'#$1B'[0m',
+    #$1B'[3mItalic text'#$1B'[0m',
     render('<span class="italic">Italic text</span>'));
 end;
 
 procedure test_underline;
 begin
   assert_equal('underline',
-    #$1B'[4mUnderlined text'#$1B'[0m'#$1B'[0m'#$1B'[4m'#$1B'[0m'#$1B'[0m',
+    #$1B'[4mUnderlined text'#$1B'[0m',
     render('<span class="underline">Underlined text</span>'));
 end;
 
 procedure test_line_through;
 begin
   assert_equal('line-through-styling',
-    'Strikethrough styling'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
-    render('<span class="line-though">Strikethrough styling</span>'));
+    #$1B'[9mStrikethrough styling'#$1B'[0m',
+    render('<span class="line-through">Strikethrough styling</span>'));
 end;
 
 procedure test_uppercase;
@@ -153,7 +152,7 @@ end;
 procedure test_invisible;
 begin
   assert_equal('invisible',
-    #$1B'[8mHidden'#$1B'[0m'#$1B'[0m'#$1B'[8m'#$1B'[0m'#$1B'[0m',
+    #$1B'[8mHidden'#$1B'[0m',
     render('<span class="invisible">Hidden</span>'));
 end;
 
@@ -189,49 +188,49 @@ end;
 procedure test_div;
 begin
   assert_equal('<div>',
-    'This is a div element.'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+    'This is a div element.'#$1B'[0m',
     render('<div>This is a div element.</div>'));
 end;
 
 procedure test_p;
 begin
   assert_equal('<p>',
-    'This is a paragraph.'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+    'This is a paragraph.'#$1B'[0m',
     render('<p>This is a paragraph.</p>'));
 end;
 
 procedure test_span;
 begin
   assert_equal('<span>',
-    'This is a CLI app built with '#$1B'[0m'#$1B'[0m'#$1B'[38;2;134;239;172mTermStyle'#$1B'[0m'#$1B'[0m'#$1B'[38;2;134;239;172m'#$1B'[0m'#$1B'[0m.'#$1B'[0m'#$1B'[0m',
+    'This is a CLI app built with '#$1B'[38;2;134;239;172mTermStyle'#$1B'[0m.',
     render('This is a CLI app built with <span class="text-green-300">TermStyle</span>.'));
 end;
 
 procedure test_a;
 begin
   assert_equal('<a>',
-    'This is a CLI app built with TermStyle. '#$1B'[0m'#$1B'[0m'#$1B'[4;38;2;59;130;246m'#$1B']8;;/'#$07'Click here to open'#$1B'[0m'#$1B']8;;'#$07#$1B'[0m',
+    'This is a CLI app built with TermStyle. '#$1B'[38;2;59;130;246m'#$1B']8;;/'#$07'Click here to open'#$1B']8;;'#$07,
     render('This is a CLI app built with TermStyle. <a href="/">Click here to open</a>'));
 end;
 
 procedure test_b;
 begin
   assert_equal('<b>',
-  'This is a CLI app built with '#$1B'[0m'#$1B'[0m'#$1B'[1mTermStyle'#$1B'[0m'#$1B'[0m'#$1B'[1m'#$1B'[0m'#$1B'[0m.'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+  'This is a CLI app built with '#$1B'[1mTermStyle'#$1B'[0m.'#$1B'[0m',
   render('<p>This is a CLI app built with <b>TermStyle</b>.</p>'));
 end;
 
 procedure test_i;
 begin
   assert_equal('<i>',
-    'This is a CLI app built with '#$1B'[0m'#$1B'[0m'#$1B'[3mTermStyle'#$1B'[0m'#$1B'[0m'#$1B'[3m'#$1B'[0m'#$1B'[0m.'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+    'This is a CLI app built with '#$1B'[3mTermStyle'#$1B'[0m.'#$1B'[0m',
     render('<p>This is a CLI app built with <i>TermStyle</i>.</p>'));
 end;
 
 procedure test_s;
 begin
   assert_equal('<s>',
-    'This is a CLI app built with '#$1B'[0m'#$1B'[0m'#$1B'[9mTermStyle'#$1B'[0m'#$1B'[0m'#$1B'[9m'#$1B'[0m'#$1B'[0m.'#$1B'[0m'#$1B'[0m'#$1B'[0m'#$1B'[0m',
+    'This is a CLI app built with '#$1B'[9mTermStyle'#$1B'[0m.'#$1B'[0m',
     render('<p>This is a CLI app built with <s>TermStyle</s>.</p>'));
 end;
 

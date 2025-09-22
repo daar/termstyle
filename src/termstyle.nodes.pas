@@ -259,21 +259,16 @@ function THtmlNode.Render: string;
 var
   i: integer;
 begin
-  // Start with this node’s style
+  // Prepend this node's style (empty if no style)
   Result := Self.ToAnsi;
 
-  // Render each child separately
+  // Render each child recursively
   for i := 0 to Children.Count - 1 do
-  begin
     Result += THtmlNode(Children[i]).Render;
-    // Reset after child
-    Result += RESET_SEQ;
-    // Re-apply this node’s style for the next sibling
-    Result += Self.ToAnsi;
-  end;
 
-  // Finally, close this node’s style
-  Result += RESET_SEQ;
+  // Append reset sequence if any style was applied
+  if Result <> '' then
+    Result += RESET_SEQ;
 end;
 
 function THtmlNode.GetEnumerator: TClassEnumerator;
@@ -288,11 +283,10 @@ var
   i: integer;
 begin
   Result := '';
+
+  // Render each child recursively
   for i := 0 to Children.Count - 1 do
-  begin
     Result += THtmlNode(Children[i]).Render;
-    Result += RESET_SEQ;   // reset after child
-  end;
 end;
 
 { THtmlA }
