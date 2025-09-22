@@ -38,7 +38,7 @@ answer := prompt('What is your name?');
 
 ### Message helpers
 
-TermStyle provides several default message helpers that display a colorful message depending on the severity.
+TermStyle comes with ready-to-use helpers that print messages styled by their severity.
 
 ```pascal
 procedure error(const Msg: string);
@@ -52,7 +52,7 @@ procedure info(const Msg: string);
 The `banner()` function may be used to show a banner on screen with a custom HTML formatting.
 
 ```pascal
-banner('<span class="text-white bg-blue-400 font-bold">', '</span>', 'TERMSTYLE DEMO CLI'); 
+banner('TERMSTYLE DEMO CLI', 'text-white bg-blue-400 font-bold'); 
 ```
 
 
@@ -60,8 +60,8 @@ banner('<span class="text-white bg-blue-400 font-bold">', '</span>', 'TERMSTYLE 
 
 All the classes supported use exactly the same logic that is available on [tailwindcss.com/docs](https://tailwindcss.com/docs).
 
-* **[Background Color](https://tailwindcss.com/docs/background-color):** `bg-{color}-{variant}`.
-* **[Text Color](https://tailwindcss.com/docs/text-color):** `text-{color}-{variant}`.
+* **[Background Color](https://tailwindcss.com/docs/background-color):** `bg-{color}-{shade}`.
+* **[Text Color](https://tailwindcss.com/docs/text-color):** `text-{color}-{shade}`.
 * **[Font Weight](https://tailwindcss.com/docs/font-weight#class-reference):** `font-bold`, `font-normal`.
 * **[Font Style](https://tailwindcss.com/docs/font-style#italics):** `italic`.
 * **[Text Decoration](https://tailwindcss.com/docs/text-decoration):** `underline`, `line-through`.
