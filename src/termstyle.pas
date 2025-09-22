@@ -29,19 +29,29 @@ var
   Doc: THTMLDocument;
   WrappedData: string;
   RootHtmlNode: THtmlBody;
+  Stream: TStringStream;
 begin
   Doc := THTMLDocument.Create;
   try
     // Render the HTML snippet
     WrappedData := '<body>' + S + '</body>';
-    ReadHTMLFile(Doc, TStringStream.Create(WrappedData));
+
+    Stream := TStringStream.Create(WrappedData);
+    try
+      ReadHTMLFile(Doc, Stream);
+    finally
+      Stream.Free;
+    end;
 
     RootHtmlNode := THtmlBody.Create('');
+    try
+      // Traverse from the root
+      TraverseNode(Doc.DocumentElement, RootHtmlNode);
 
-    // Traverse from the root
-    TraverseNode(Doc.DocumentElement, RootHtmlNode);
-
-    Result := RootHtmlNode.Render;
+      Result := RootHtmlNode.Render;
+    finally
+      RootHtmlNode.Free;
+    end;
   finally
     Doc.Free;
   end;

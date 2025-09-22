@@ -6,6 +6,7 @@ interface
 
 uses
   Classes,
+  Contnrs,
   DOM,
   StrUtils,
   SysUtils,
@@ -30,16 +31,18 @@ type
   THtmlNode = class
   private
     FClasses: string;
+    FChildren: TObjectList; // owns its children
 
     function ToAnsi: string;
     procedure AnsiCodeForClass(const AClass: string);
   public
     Style: TTextStyle;
-    Children: TFPList;
 
     constructor Create(const AClass: string);
     destructor Destroy; override;
+
     procedure AddChild(Node: THtmlNode);
+    property Children: TObjectList read FChildren;
 
     function Render: string; virtual;
 
@@ -199,24 +202,26 @@ end;
 
 constructor THtmlNode.Create(const AClass: string);
 var
-  cls: string;
+  SingleClass: string;
 begin
-  FClasses := AClass;
-  Children := TFPList.Create;
+  inherited Create;
 
-  for cls in Self do
-    AnsiCodeForClass(lowercase(cls));
+  FClasses := AClass;
+  FChildren := TObjectList.Create(True);
+
+  for SingleClass in Self do
+    AnsiCodeForClass(lowercase(SingleClass));
 end;
 
 destructor THtmlNode.Destroy;
 begin
-  Children.Free;
+  FChildren.Free;
   inherited Destroy;
 end;
 
 procedure THtmlNode.AddChild(Node: THtmlNode);
 begin
-  Children.Add(Node);
+  FChildren.Add(Node);
 end;
 
 procedure THtmlNode.AnsiCodeForClass(const AClass: string);
@@ -366,6 +371,7 @@ end;
 constructor THtmlText.Create(const AClass, AText: string);
 begin
   inherited Create(AClass);
+
   Text := HtmlDecode(AText);
 end;
 
@@ -440,6 +446,9 @@ begin
       if (ChildHtmlNode = nil) or ((Node.ChildNodes.Count = 0) and
         (not Assigned(Node.Attributes))) then
       begin
+        if ChildHtmlNode <> nil then
+          ChildHtmlNode.Free; // prevent leak
+
         TagText := '<' + Elem.TagName;
         if Elem.HasAttribute('class') then
           TagText += ' class="' + Elem.GetAttribute('class') + '"';
