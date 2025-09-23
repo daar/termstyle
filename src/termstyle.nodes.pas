@@ -33,8 +33,8 @@ type
     FClasses: string;
     FChildren: TObjectList; // owns its children
 
-    function ToAnsi: string;
     procedure AnsiCodeForClass(const AClass: string);
+    procedure ParseBoxClass(const AClass: string);
   public
     Style: TTextStyle;
 
@@ -62,7 +62,7 @@ type
   public
     Text: string;
     constructor Create(const AClass, AText: string);
-    function Render: string; override;
+        function Render: string; override;
   end;
 
   { THtmlDiv }
@@ -83,7 +83,8 @@ type
   public
     Href: string;
     constructor Create(const AClass, AHref: string);
-    function Render: string; override;
+        function Render: string; override;
+
   end;
 
   { THtmlS }
@@ -126,6 +127,56 @@ procedure TraverseNode(Node: TDOMNode; ParentHtmlNode: THtmlNode);
 
 implementation
 
+uses
+  Math;
+
+function CapitalizeWords(const S: string): string;
+var
+  parts: TStringList;
+  i:     integer;
+begin
+  parts := TStringList.Create;
+  try
+    ExtractStrings([' '], [], PChar(S), parts); // crude split on spaces
+    for i := 0 to parts.Count - 1 do
+      if parts[i] <> '' then
+        parts[i] := UpperCase(parts[i][1]) + LowerCase(Copy(parts[i], 2, MaxInt));
+    Result := Trim(StringReplace(parts.Text, sLineBreak, ' ', [rfReplaceAll]));
+  finally
+    parts.Free;
+  end;
+end;
+
+function ToSnakeCase(const S: string): string;
+var
+  i:  integer;
+  ch: char;
+  sb: string;
+begin
+  sb := '';
+  for i := 1 to Length(S) do
+  begin
+    ch := S[i];
+    if ch in ['A'..'Z'] then
+      sb += LowerCase(ch)
+    else if ch in ['a'..'z', '0'..'9'] then
+      sb += ch
+    else if ch = ' ' then
+      sb += '_'
+    else
+      sb += '_';
+  end;
+  // collapse multiple underscores
+  Result := sb;
+  while Pos('__', Result) > 0 do
+    Result := StringReplace(Result, '__', '_', [rfReplaceAll]);
+  // trim underscores
+  Result := Trim(Result);
+  if (Result <> '') and (Result[1] = '_') then Delete(Result, 1, 1);
+  if (Result <> '') and (Result[Length(Result)] = '_') then
+    Delete(Result, Length(Result), 1);
+end;
+
 function HtmlDecode(const S: string): string;
 const
   Entities: array[0..0] of record
@@ -164,42 +215,6 @@ end;
 
 { THtmlNode }
 
-function THtmlNode.ToAnsi: string;
-var
-  AnsiCode: string;
-  Attr:     TAnsiAttrEnum;
-begin
-  AnsiCode := '';
-
-  for Attr in Style.Attrs do
-  begin
-    if AnsiCode <> '' then
-      AnsiCode += ';';
-    AnsiCode += AnsiAttrCode[Attr];
-  end;
-
-  if Style.FG.Assigned then
-  begin
-    if AnsiCode <> '' then
-      AnsiCode += ';';
-    AnsiCode += Format('38;2;%d;%d;%d', [Style.FG.Red, Style.FG.Green,
-      Style.FG.Blue]);
-  end;
-
-  if Style.BG.Assigned then
-  begin
-    if AnsiCode <> '' then
-      AnsiCode += ';';
-    AnsiCode += Format('48;2;%d;%d;%d', [Style.BG.Red, Style.BG.Green,
-      Style.BG.Blue]);
-  end;
-
-  if AnsiCode = '' then
-    Result := ''
-  else
-    Result := ESC + ANSIcode + 'm';
-end;
-
 constructor THtmlNode.Create(const AClass: string);
 var
   SingleClass: string;
@@ -209,12 +224,22 @@ begin
   FClasses := AClass;
   FChildren := TObjectList.Create(True);
 
+  // create style object for this node
+  Style := TTextStyle.Create;
+
+  //TODO: optimization possible to parse all classes more effectively
+  //      possibly replace these functions by a style class??
   for SingleClass in Self do
+  begin
     AnsiCodeForClass(lowercase(SingleClass));
+
+    ParseBoxClass(lowercase(SingleClass));
+  end;
 end;
 
 destructor THtmlNode.Destroy;
 begin
+  Style.Free;
   FChildren.Free;
   inherited Destroy;
 end;
@@ -240,6 +265,14 @@ begin
     'sr-only': include(Style.Attrs, taHidden);
     'invisible': include(Style.Attrs, taHidden);
     'line-through': include(Style.Attrs, taStrike);
+
+    // transforms
+    'uppercase': Style.Transform := ttUppercase;
+    'lowercase': Style.Transform := ttLowercase;
+    'capitalize': Style.Transform := ttCapitalize;
+    'snakecase': Style.Transform := ttSnakeCase;
+    'normal-case': Style.Transform := ttNormalCase;
+
     else
       // Check for colors
       if Copy(AClass, 1, 5) = 'text-' then
@@ -255,21 +288,325 @@ begin
   end;
 end;
 
+procedure THtmlNode.ParseBoxClass(const AClass: string);
+var
+  vstr: string;
+  v: Integer;
+
+  function TryParseValue(const S: string; out OutVal: Integer): Boolean;
+  begin
+    Result := TryStrToInt(S, OutVal);
+    // If you want to support other tokens (e.g. 'px', 'full'), handle them here.
+  end;
+
+begin
+  // Padding: p-, pt-, pr-, pb-, pl-, px-, py-
+  if Copy(AClass, 1, 2) = 'p-' then
+  begin
+    vstr := Copy(AClass, 3, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Padding.Top := v;
+      Style.Padding.Bottom := v;
+      Style.Padding.Left := v;
+      Style.Padding.Right := v;
+    end;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'pt-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Padding.Top := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'pr-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Padding.Right := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'pb-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Padding.Bottom := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'pl-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Padding.Left := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'px-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Padding.Left := v;
+      Style.Padding.Right := v;
+    end;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'py-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Padding.Top := v;
+      Style.Padding.Bottom := v;
+    end;
+    Exit;
+  end;
+
+  // Margin: m-, mt-, mr-, mb-, ml-, mx-, my-
+  if Copy(AClass, 1, 2) = 'm-' then
+  begin
+    vstr := Copy(AClass, 3, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Margin.Top := v;
+      Style.Margin.Bottom := v;
+      Style.Margin.Left := v;
+      Style.Margin.Right := v;
+    end;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'mt-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Margin.Top := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'mr-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Margin.Right := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'mb-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Margin.Bottom := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'ml-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then Style.Margin.Left := v;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'mx-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Margin.Left := v;
+      Style.Margin.Right := v;
+    end;
+    Exit;
+  end;
+
+  if Copy(AClass, 1, 3) = 'my-' then
+  begin
+    vstr := Copy(AClass, 4, MaxInt);
+    if TryParseValue(vstr, v) then
+    begin
+      Style.Margin.Top := v;
+      Style.Margin.Bottom := v;
+    end;
+    Exit;
+  end;
+
+  // If additional shorthand like 'p-0' or 'm-0' exists, it's already covered above.
+end;
+
+function ApplyPadding(const Content: string; const Style: TTextStyle): string;
+var
+  Lines, PaddedLines: TStringArray;
+  Line, PadLeft, PadRight: string;
+  i, idx: Integer;
+  BGAnsi: string;
+  ContentWidth: Integer;
+begin
+  if (Style.Padding.Top = 0) and (Style.Padding.Bottom = 0) and
+     (Style.Padding.Left = 0) and (Style.Padding.Right = 0) then
+    Exit(Content);
+
+  BGAnsi := '';
+  if Style.BG.Assigned then
+    BGAnsi := Format('%s48;2;%d;%d;%dm', [ESC, Style.BG.Red, Style.BG.Green, Style.BG.Blue]);
+
+  Lines := Content.Split([sLineBreak]);
+  SetLength(PaddedLines, 0);
+  idx := 0;
+  PadLeft := StringOfChar(' ', Style.Padding.Left);
+  PadRight := StringOfChar(' ', Style.Padding.Right);
+
+  // Top padding
+  for i := 1 to Style.Padding.Top do
+  begin
+    SetLength(PaddedLines, idx + 1);
+    ContentWidth := 0;
+    if Length(Lines) > 0 then
+      ContentWidth := Max(Length(Lines[0]), 1);
+    PaddedLines[idx] := BGAnsi + StringOfChar(' ', ContentWidth + Style.Padding.Left + Style.Padding.Right) + RESET_SEQ;
+    Inc(idx);
+  end;
+
+  // Content lines with left/right padding
+  for Line in Lines do
+  begin
+    SetLength(PaddedLines, idx + 1);
+    // Only wrap with BGAnsi if line does not already start with it
+    if (Style.BG.Assigned) and (Pos(BGAnsi, Line) = 0) then
+      PaddedLines[idx] := BGAnsi + PadLeft + Line + PadRight + RESET_SEQ
+    else
+      PaddedLines[idx] := PadLeft + Line + PadRight;
+    Inc(idx);
+  end;
+
+  // Bottom padding
+  for i := 1 to Style.Padding.Bottom do
+  begin
+    SetLength(PaddedLines, idx + 1);
+    ContentWidth := 0;
+    if Length(Lines) > 0 then
+      ContentWidth := Max(Length(Lines[0]), 1);
+    PaddedLines[idx] := BGAnsi + StringOfChar(' ', ContentWidth + Style.Padding.Left + Style.Padding.Right) + RESET_SEQ;
+    Inc(idx);
+  end;
+
+  Result := String.Join(sLineBreak, PaddedLines);
+end;
+
+function MaxLength(const Lines: TStringArray): Integer;
+var
+  i, L: Integer;
+begin
+  Result := 0;
+  for i := 0 to High(Lines) do
+  begin
+    L := Length(Lines[i]);
+    if L > Result then
+      Result := L;
+  end;
+end;
+
+function StripAnsi(const S: string): string;
+var
+  i: Integer;
+  InSeq: Boolean;
+begin
+  Result := '';
+  InSeq := False;
+  i := 1;
+  while i <= Length(S) do
+  begin
+    if InSeq then
+    begin
+      // Skip characters until 'm' is found
+      if S[i] = 'm' then
+        InSeq := False;
+      Inc(i);
+    end
+    else if S[i] = ESC then
+    begin
+      InSeq := True;
+      Inc(i);
+    end
+    else
+    begin
+      Result := Result + S[i];
+      Inc(i);
+    end;
+  end;
+end;
+
+function ApplyMargin(const Inner: string; Style: TTextStyle): string;
+var
+  Lines: TStringArray;
+  Line: string;
+  i: Integer;
+  ContentWidth: Integer;
+begin
+  // Split content into lines
+  Lines := Inner.Split([sLineBreak]);
+
+  // Determine the width of the content without ANSI escape codes
+  ContentWidth := 0;
+  for Line in Lines do
+    if Length(StripAnsi(Line)) > ContentWidth then
+      ContentWidth := Length(StripAnsi(Line));
+
+  // Apply top margin
+  Result := '';
+  for i := 1 to Style.Margin.Top do
+    Result += StringOfChar(' ', ContentWidth + Style.Margin.Left + Style.Margin.Right) + RESET_SEQ + sLineBreak;
+
+  // Apply left and right margin for each content line
+  for Line in Lines do
+  begin
+    Result += StringOfChar(' ', Style.Margin.Left)
+      + Line
+      + StringOfChar(' ', Style.Margin.Right)
+      + RESET_SEQ
+      + sLineBreak;
+  end;
+
+  // Apply bottom margin
+  for i := 1 to Style.Margin.Bottom do
+    Result += StringOfChar(' ', ContentWidth + Style.Margin.Left + Style.Margin.Right) + RESET_SEQ + sLineBreak;
+
+  // Trim final newline
+  if Result.EndsWith(sLineBreak) then
+    Delete(Result, Length(Result) - Length(sLineBreak) + 1, MaxInt);
+end;
+
 function THtmlNode.Render: string;
 var
   i: integer;
+  Inner, Line: string;
+  ParentAnsi: string;
 begin
-  // Prepend this node's style (empty if no style)
-  Result := Self.ToAnsi;
-
-  // Render each child recursively
+  // 1. Render children first
+  Inner := '';
   for i := 0 to Children.Count - 1 do
-    Result += THtmlNode(Children[i]).Render;
+    Inner += THtmlNode(Children[i]).Render; // pass own style as parent
 
-  // Append reset sequence if any style was applied
-  if Result <> '' then
-    Result += RESET_SEQ;
+  // 2. Apply padding first (inside)
+  //Inner := ApplyPadding(Inner, Style);
+
+  // 3. Apply margin last (outside) using parent's style if available
+  ParentAnsi := Style.Parent.ToAnsi;
+
+  Inner := ApplyMargin(Inner, Style);
+
+  // 4. Apply text style to each line
+  Result := '';
+  for Line in Inner.Split([sLineBreak]) do
+  begin
+    if Line <> '' then
+      Result += ParentAnsi + Line + RESET_SEQ + sLineBreak
+    else
+      Result += sLineBreak;
+  end;
+
+  // 5. Trim final newline
+  if Result.EndsWith(sLineBreak) then
+    Delete(Result, Length(Result) - Length(sLineBreak) + 1, MaxInt);
 end;
+
 
 function THtmlNode.GetEnumerator: TClassEnumerator;
 begin
@@ -311,7 +648,7 @@ begin
     childRendered += THtmlNode(Children[i]).Render;
 
   // Wrap the rendered children in the OSC 8 escape sequence for hyperlinks
-  Result := ToAnsi +         // ANSI codes for terminal color
+  Result := Style.ToAnsi +         // ANSI codes for terminal color
     #27']8;;' + Href + #7 +  // start hyperlink
     childRendered +          // rendered children (text + styled content)
     #27']8;;'#7;             // end hyperlink
@@ -370,12 +707,24 @@ begin
 end;
 
 function THtmlText.Render: string;
+var
+  i: integer;
+  textOut: string;
 begin
-  // Output the actual text
-  Result := Text;
+  // apply transform
+   case Style.Transform of
+    ttUppercase: textOut := UpperCase(Text);
+    ttLowercase: textOut := LowerCase(Text);
+    ttCapitalize: textOut := CapitalizeWords(Text);
+    ttSnakeCase: textOut := ToSnakeCase(Text);
+    ttNormalCase: textOut := Text;
+  end;
 
-  // Then render children (if any)
-  Result += inherited Render;
+  // output text and render any children (children already inherit style via MergeFrom)
+  Result := textOut;
+  for i := 0 to Children.Count - 1 do
+    Result += THtmlNode(Children[i]).Render;
+  Result := Style.ToAnsi + Result + RESET_SEQ;
 end;
 
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
@@ -393,13 +742,13 @@ begin
   if lowercase(Elem.TagName) = 'body' then
     Result := THtmlBody.Create('')
   else if lowercase(Elem.TagName) = 'div' then
-    Result := THtmlDiv.Create(Elem.GetAttribute('class'))
+    Result := THtmlDiv.Create(string(Elem.GetAttribute('class')))
   else if lowercase(Elem.TagName) = 'span' then
-    Result := THtmlSpan.Create(Elem.GetAttribute('class'))
+    Result := THtmlSpan.Create(string(Elem.GetAttribute('class')))
   else if lowercase(Elem.TagName) = 'p' then
-    Result := THtmlSpan.Create(Elem.GetAttribute('class'))
+    Result := THtmlSpan.Create(string(Elem.GetAttribute('class')))
   else if lowercase(Elem.TagName) = 'a' then
-    Result := THtmlA.Create(Elem.GetAttribute('class'), Elem.GetAttribute('href'))
+    Result := THtmlA.Create(string(Elem.GetAttribute('class')), string(Elem.GetAttribute('href')))
   else if lowercase(Elem.TagName) = 's' then
     Result := THtmlS.Create('')
   else if lowercase(Elem.TagName) = 'b' then
@@ -420,6 +769,7 @@ var
   Elem: TDOMElement;
   ChildHtmlNode: THtmlNode;
   TagText: string;
+  TextNode: THtmlText;
 begin
   Elem := TDOMElement(Node);
 
@@ -443,23 +793,32 @@ begin
         if ChildHtmlNode <> nil then
           ChildHtmlNode.Free; // prevent leak
 
-        TagText := '<' + Elem.TagName;
+        TagText := '<' + string(Elem.TagName);
+
         if Elem.HasAttribute('class') then
-          TagText += ' class="' + Elem.GetAttribute('class') + '"';
+          TagText += ' class="' + string(Elem.GetAttribute('class')) + '"';
+
         TagText += '>';
-        ParentHtmlNode.AddChild(THtmlText.Create('', TagText));
+
+        TextNode := THtmlText.Create('', TagText);
+        TextNode.Style.MergeFrom(ParentHtmlNode.Style);
+        ParentHtmlNode.AddChild(TextNode);
 
         // Only add closing tag if children exist
         if Node.ChildNodes.Count > 0 then
         begin
           for i := 0 to Node.ChildNodes.Count - 1 do
             TraverseNode(Node.ChildNodes[i], ParentHtmlNode);
-          ParentHtmlNode.AddChild(THtmlText.Create('', '</' + Elem.TagName + '>'));
+
+          TextNode := THtmlText.Create('', '</' + string(Elem.TagName) + '>');
+          TextNode.Style.MergeFrom(ParentHtmlNode.Style);
+          ParentHtmlNode.AddChild(TextNode);
         end;
       end
       else
       begin
         // Known tag or real element with children
+        ChildHtmlNode.Style.MergeFrom(ParentHtmlNode.Style);
         ParentHtmlNode.AddChild(ChildHtmlNode);
         for i := 0 to Node.ChildNodes.Count - 1 do
           TraverseNode(Node.ChildNodes[i], ChildHtmlNode);
@@ -468,7 +827,11 @@ begin
 
     TEXT_NODE:
       if Trim(Node.NodeValue) <> '' then
-        ParentHtmlNode.AddChild(THtmlText.Create('', Node.NodeValue));
+      begin
+        TextNode := THtmlText.Create('', string(Node.NodeValue));
+        TextNode.Style.MergeFrom(ParentHtmlNode.Style);
+        ParentHtmlNode.AddChild(TextNode);
+      end;
 
     DOCUMENT_NODE, DOCUMENT_FRAGMENT_NODE:
       for i := 0 to Node.ChildNodes.Count - 1 do
