@@ -84,7 +84,6 @@ type
     Href: string;
     constructor Create(const AClass, AHref: string);
     function Render: string; override;
-
   end;
 
   { THtmlS }
@@ -574,16 +573,15 @@ end;
 
 function THtmlA.Render: string;
 var
-  childRendered: string;
+  childRendered: string = '';
   i: integer;
 begin
   // Render all children recursively
-  childRendered := '';
   for i := 0 to Children.Count - 1 do
     childRendered += THtmlNode(Children[i]).Render;
 
   // Wrap the rendered children in the OSC 8 escape sequence for hyperlinks
-  Result := Style.ToAnsi +         // ANSI codes for terminal color
+  Result :=
     #27']8;;' + Href + #7 +  // start hyperlink
     childRendered +          // rendered children (text + styled content)
     #27']8;;'#7;             // end hyperlink
@@ -644,22 +642,19 @@ end;
 function THtmlText.Render: string;
 var
   i: integer;
-  textOut: string;
 begin
   // apply transform
   case Style.Transform of
-    ttUppercase: textOut := UpperCase(Text);
-    ttLowercase: textOut := LowerCase(Text);
-    ttCapitalize: textOut := CapitalizeWords(Text);
-    ttSnakeCase: textOut := ToSnakeCase(Text);
-    ttNormalCase: textOut := Text;
+    ttUppercase: Result := UpperCase(Text);
+    ttLowercase: Result := LowerCase(Text);
+    ttCapitalize: Result := CapitalizeWords(Text);
+    ttSnakeCase: Result := ToSnakeCase(Text);
+    ttNormalCase: Result := Text;
   end;
 
   // output text and render any children (children already inherit style via MergeFrom)
-  Result := textOut;
   for i := 0 to Children.Count - 1 do
     Result += THtmlNode(Children[i]).Render;
-  Result := Style.ToAnsi + Result + RESET_SEQ;
 end;
 
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
