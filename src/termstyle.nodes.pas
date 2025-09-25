@@ -38,7 +38,7 @@ type
   public
     Style: TTextStyle;
 
-    constructor Create(const AClass: string);
+    constructor Create(const AClass: string = '');
     destructor Destroy; override;
 
     procedure AddChild(Node: THtmlNode);
@@ -62,7 +62,7 @@ type
   public
     Text: string;
     constructor Create(const AClass, AText: string);
-        function Render: string; override;
+    function Render: string; override;
   end;
 
   { THtmlDiv }
@@ -83,7 +83,7 @@ type
   public
     Href: string;
     constructor Create(const AClass, AHref: string);
-        function Render: string; override;
+    function Render: string; override;
 
   end;
 
@@ -291,9 +291,9 @@ end;
 procedure THtmlNode.ParseBoxClass(const AClass: string);
 var
   vstr: string;
-  v: Integer;
+  v:    integer;
 
-  function TryParseValue(const S: string; out OutVal: Integer): Boolean;
+  function TryParseValue(const S: string; out OutVal: integer): boolean;
   begin
     Result := TryStrToInt(S, OutVal);
     // If you want to support other tokens (e.g. 'px', 'full'), handle them here.
@@ -431,88 +431,15 @@ begin
   // If additional shorthand like 'p-0' or 'm-0' exists, it's already covered above.
 end;
 
-function ApplyPadding(const Content: string; const Style: TTextStyle): string;
-var
-  Lines, PaddedLines: TStringArray;
-  Line, PadLeft, PadRight: string;
-  i, idx: Integer;
-  BGAnsi: string;
-  ContentWidth: Integer;
-begin
-  if (Style.Padding.Top = 0) and (Style.Padding.Bottom = 0) and
-     (Style.Padding.Left = 0) and (Style.Padding.Right = 0) then
-    Exit(Content);
-
-  BGAnsi := '';
-  if Style.BG.Assigned then
-    BGAnsi := Format('%s48;2;%d;%d;%dm', [ESC, Style.BG.Red, Style.BG.Green, Style.BG.Blue]);
-
-  Lines := Content.Split([sLineBreak]);
-  SetLength(PaddedLines, 0);
-  idx := 0;
-  PadLeft := StringOfChar(' ', Style.Padding.Left);
-  PadRight := StringOfChar(' ', Style.Padding.Right);
-
-  // Top padding
-  for i := 1 to Style.Padding.Top do
-  begin
-    SetLength(PaddedLines, idx + 1);
-    ContentWidth := 0;
-    if Length(Lines) > 0 then
-      ContentWidth := Max(Length(Lines[0]), 1);
-    PaddedLines[idx] := BGAnsi + StringOfChar(' ', ContentWidth + Style.Padding.Left + Style.Padding.Right) + RESET_SEQ;
-    Inc(idx);
-  end;
-
-  // Content lines with left/right padding
-  for Line in Lines do
-  begin
-    SetLength(PaddedLines, idx + 1);
-    // Only wrap with BGAnsi if line does not already start with it
-    if (Style.BG.Assigned) and (Pos(BGAnsi, Line) = 0) then
-      PaddedLines[idx] := BGAnsi + PadLeft + Line + PadRight + RESET_SEQ
-    else
-      PaddedLines[idx] := PadLeft + Line + PadRight;
-    Inc(idx);
-  end;
-
-  // Bottom padding
-  for i := 1 to Style.Padding.Bottom do
-  begin
-    SetLength(PaddedLines, idx + 1);
-    ContentWidth := 0;
-    if Length(Lines) > 0 then
-      ContentWidth := Max(Length(Lines[0]), 1);
-    PaddedLines[idx] := BGAnsi + StringOfChar(' ', ContentWidth + Style.Padding.Left + Style.Padding.Right) + RESET_SEQ;
-    Inc(idx);
-  end;
-
-  Result := String.Join(sLineBreak, PaddedLines);
-end;
-
-function MaxLength(const Lines: TStringArray): Integer;
-var
-  i, L: Integer;
-begin
-  Result := 0;
-  for i := 0 to High(Lines) do
-  begin
-    L := Length(Lines[i]);
-    if L > Result then
-      Result := L;
-  end;
-end;
-
 function StripAnsi(const S: string): string;
 var
-  i: Integer;
-  InSeq: Boolean;
+  i:     integer;
+  InSeq: boolean;
 begin
   Result := '';
   InSeq := False;
   i := 1;
   while i <= Length(S) do
-  begin
     if InSeq then
     begin
       // Skip characters until 'm' is found
@@ -530,83 +457,91 @@ begin
       Result := Result + S[i];
       Inc(i);
     end;
-  end;
-end;
-
-function ApplyMargin(const Inner: string; Style: TTextStyle): string;
-var
-  Lines: TStringArray;
-  Line: string;
-  i: Integer;
-  ContentWidth: Integer;
-begin
-  // Split content into lines
-  Lines := Inner.Split([sLineBreak]);
-
-  // Determine the width of the content without ANSI escape codes
-  ContentWidth := 0;
-  for Line in Lines do
-    if Length(StripAnsi(Line)) > ContentWidth then
-      ContentWidth := Length(StripAnsi(Line));
-
-  // Apply top margin
-  Result := '';
-  for i := 1 to Style.Margin.Top do
-    Result += StringOfChar(' ', ContentWidth + Style.Margin.Left + Style.Margin.Right) + RESET_SEQ + sLineBreak;
-
-  // Apply left and right margin for each content line
-  for Line in Lines do
-  begin
-    Result += StringOfChar(' ', Style.Margin.Left)
-      + Line
-      + StringOfChar(' ', Style.Margin.Right)
-      + RESET_SEQ
-      + sLineBreak;
-  end;
-
-  // Apply bottom margin
-  for i := 1 to Style.Margin.Bottom do
-    Result += StringOfChar(' ', ContentWidth + Style.Margin.Left + Style.Margin.Right) + RESET_SEQ + sLineBreak;
-
-  // Trim final newline
-  if Result.EndsWith(sLineBreak) then
-    Delete(Result, Length(Result) - Length(sLineBreak) + 1, MaxInt);
 end;
 
 function THtmlNode.Render: string;
 var
   i: integer;
-  Inner, Line: string;
-  ParentAnsi: string;
+  Inner, Line, PaddedLine: string;
+  innerLength: integer;
+  Padded: string;
 begin
-  // 1. Render children first
+  // Render children
   Inner := '';
   for i := 0 to Children.Count - 1 do
-    Inner += THtmlNode(Children[i]).Render; // pass own style as parent
+    Inner += THtmlNode(Children[i]).Render;
 
-  // 2. Apply padding first (inside)
-  //Inner := ApplyPadding(Inner, Style);
+  // Calculate length in characters of the inner text (no ANSI)
+  innerLength := Length(StripAnsi(Inner));
 
-  // 3. Apply margin last (outside) using parent's style if available
-  ParentAnsi := Style.Parent.ToAnsi;
+  // Apply padding (inside the box, using node’s own style)
+  Padded := '';
 
-  Inner := ApplyMargin(Inner, Style);
+  // Top padding lines
+  for i := 1 to Style.Padding.Top do
+    Padded +=
+      Style.ToAnsi +
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      RESET_SEQ + 
+      sLineBreak;
 
-  // 4. Apply text style to each line
+  // Content lines with left/right padding
+  for Line in Inner.Split([sLineBreak]) do
+  begin
+    PaddedLine :=
+      Style.ToAnsi +
+      StringOfChar(' ', Style.Padding.Left) +  // left padding
+      Line +
+      Style.ToAnsi +
+      StringOfChar(' ', Style.Padding.Right) + // right padding
+      RESET_SEQ;
+    Padded += PaddedLine + sLineBreak;
+  end;
+
+  // Bottom padding lines
+  for i := 1 to Style.Padding.Bottom do
+    Padded +=
+      Style.ToAnsi +
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      RESET_SEQ + 
+      sLineBreak;
+
+  // Replace Inner with padded version
+  Inner := Padded;
+
+  // Apply margin (outside box, using parent’s style)
   Result := '';
+
+  // Top margin
+  for i := 1 to Style.Margin.Top do
+    Result +=
+      Style.Parent.ToAnsi +
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      RESET_SEQ + 
+      sLineBreak;
+
+  // Content lines with margins
   for Line in Inner.Split([sLineBreak]) do
   begin
     if Line <> '' then
-      Result += ParentAnsi + Line + RESET_SEQ + sLineBreak
-    else
-      Result += sLineBreak;
+      Result +=
+        Style.Parent.ToAnsi +
+        StringOfChar(' ', Style.Margin.Left) +
+        Line +
+        Style.Parent.ToAnsi +
+        StringOfChar(' ', Style.Margin.Right) +
+        RESET_SEQ +
+        sLineBreak;
   end;
 
-  // 5. Trim final newline
-  if Result.EndsWith(sLineBreak) then
-    Delete(Result, Length(Result) - Length(sLineBreak) + 1, MaxInt);
+  // Bottom margin
+  for i := 1 to Style.Margin.Bottom do
+    Result +=
+      Style.Parent.ToAnsi +
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      RESET_SEQ +
+      sLineBreak;
 end;
-
 
 function THtmlNode.GetEnumerator: TClassEnumerator;
 begin
@@ -712,7 +647,7 @@ var
   textOut: string;
 begin
   // apply transform
-   case Style.Transform of
+  case Style.Transform of
     ttUppercase: textOut := UpperCase(Text);
     ttLowercase: textOut := LowerCase(Text);
     ttCapitalize: textOut := CapitalizeWords(Text);
@@ -748,7 +683,8 @@ begin
   else if lowercase(Elem.TagName) = 'p' then
     Result := THtmlSpan.Create(string(Elem.GetAttribute('class')))
   else if lowercase(Elem.TagName) = 'a' then
-    Result := THtmlA.Create(string(Elem.GetAttribute('class')), string(Elem.GetAttribute('href')))
+    Result := THtmlA.Create(string(Elem.GetAttribute('class')),
+      string(Elem.GetAttribute('href')))
   else if lowercase(Elem.TagName) = 's' then
     Result := THtmlS.Create('')
   else if lowercase(Elem.TagName) = 'b' then

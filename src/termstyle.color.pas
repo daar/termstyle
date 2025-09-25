@@ -16,44 +16,13 @@ type
   // Text transforms
   TTextTransform = (ttNormalCase, ttUppercase, ttLowercase, ttCapitalize, ttSnakeCase);
 
-  // Text overflow
-  TTextOverflow = (toNone, toTruncate);
-
-  // Text alignment
-  TTextAlign = (taLeft, taCenter, taRight);
-
   // Spacing
   TBoxSpacing = record
     Top, Right, Bottom, Left: integer;
   end;
 
-  // Width & sizing
-  TWidthKind = (wkAuto, wkFull, wkFixed, wkMin, wkMax);
-
-  TWidthSetting = record
-    Kind: TWidthKind;
-    Value: integer; // in terminal columns (spaces)
-  end;
-
-  // Flexbox alignment
-  TJustifyContent = (jcNone, jcBetween, jcAround, jcEvenly, jcCenter);
-
-  // Display modes
-  TDisplayMode = (dmInline, dmBlock, dmFlex, dmHidden);
-
   // List styles
   TListStyle = (lsNone, lsDisc, lsDecimal, lsSquare);
-
-  // Responsive breakpoints
-  TResponsiveBreakpoint = (rbNone, rbSM, rbMD, rbLG, rbXL, rb2XL);
-
-  // Content repeat (e.g. <hr>)
-  TContentRepeat = record
-    Enabled: boolean;
-    Pattern: string; // e.g. '.'
-  end;
-
-  // ANSI attributes (bold, italic, etc.)
 
   // Enumerate all ANSI attributes you care about
   TAnsiAttrEnum = (
@@ -110,30 +79,15 @@ type
 
     // Text transforms
     Transform: TTextTransform;
-    Overflow: TTextOverflow;
-    Align: TTextAlign;
 
     // Box model
     Margin, Padding: TBoxSpacing;
-    SpaceX, SpaceY: integer;
-
-    // Layout
-    Width: TWidthSetting;
-    Justify: TJustifyContent;
-    Display: TDisplayMode;
-    FlexGrow: integer;
 
     // Lists
     ListStyle: TListStyle;
 
-    // Content repeat
-    Content: TContentRepeat;
-
     // Visibility
     Visible: boolean;
-
-    // Responsive breakpoint
-    Breakpoint: TResponsiveBreakpoint;
 
     constructor Create;
     procedure Assign(Source: TTextStyle);
@@ -441,27 +395,13 @@ begin
   Attrs := [];
 
   Transform := ttNormalCase;
-  Overflow := toNone;
-  Align := taLeft;
 
   Margin := Default(TBoxSpacing);
   Padding := Default(TBoxSpacing);
-  SpaceX := 0;
-  SpaceY := 0;
-
-  Width.Kind := wkAuto;
-  Width.Value := 0;
-  Justify := jcNone;
-  Display := dmInline;
-  FlexGrow := 0;
 
   ListStyle := lsNone;
 
-  Content.Enabled := False;
-  Content.Pattern := '';
-
   Visible := True;
-  Breakpoint := rbNone;
 end;
 
 procedure TTextStyle.Assign(Source: TTextStyle);
@@ -473,25 +413,13 @@ begin
   Attrs := Source.Attrs;
 
   Transform := Source.Transform;
-  Overflow := Source.Overflow;
-  Align := Source.Align;
 
   Margin := Source.Margin;
   Padding := Source.Padding;
-  SpaceX := Source.SpaceX;
-  SpaceY := Source.SpaceY;
-
-  Width := Source.Width;
-  Justify := Source.Justify;
-  Display := Source.Display;
-  FlexGrow := Source.FlexGrow;
 
   ListStyle := Source.ListStyle;
 
-  Content := Source.Content;
-
   Visible := Source.Visible;
-  Breakpoint := Source.Breakpoint;
 end;
 
 procedure TTextStyle.MergeFrom(ParentStyle: TTextStyle);
@@ -507,35 +435,15 @@ begin
   Attrs := Attrs + ParentStyle.Attrs;
 
   if Transform = ttNormalCase then Transform := ParentStyle.Transform;
-  if Overflow = toNone then Overflow := ParentStyle.Overflow;
-  if Align = taLeft then Align := ParentStyle.Align;
-
-  //if Margin.Top = 0 then Margin.Top := Source.Margin.Top;
-  //if Margin.Right = 0 then Margin.Right := Source.Margin.Right;
-  //if Margin.Bottom = 0 then Margin.Bottom := Source.Margin.Bottom;
-  //if Margin.Left = 0 then Margin.Left := Source.Margin.Left;
 
   if Padding.Top = 0 then Padding.Top := ParentStyle.Padding.Top;
   if Padding.Right = 0 then Padding.Right := ParentStyle.Padding.Right;
   if Padding.Bottom = 0 then Padding.Bottom := ParentStyle.Padding.Bottom;
   if Padding.Left = 0 then Padding.Left := ParentStyle.Padding.Left;
 
-  if SpaceX = 0 then SpaceX := ParentStyle.SpaceX;
-  if SpaceY = 0 then SpaceY := ParentStyle.SpaceY;
-
-  if Width.Kind = wkAuto then Width := ParentStyle.Width;
-  if Justify = jcNone then Justify := ParentStyle.Justify;
-  if Display = dmInline then Display := ParentStyle.Display;
-  if FlexGrow = 0 then FlexGrow := ParentStyle.FlexGrow;
-
   if ListStyle = lsNone then ListStyle := ParentStyle.ListStyle;
 
-  if not Content.Enabled and ParentStyle.Content.Enabled then
-    Content := ParentStyle.Content;
-
   Visible := ParentStyle.Visible;
-
-  if Breakpoint = rbNone then Breakpoint := ParentStyle.Breakpoint;
 end;
 
 function TTextStyle.ToAnsi: string;
