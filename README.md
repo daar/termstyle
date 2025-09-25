@@ -66,6 +66,8 @@ All the classes supported use exactly the same logic that is available on [tailw
 * **[Font Style](https://tailwindcss.com/docs/font-style#italics):** `italic`.
 * **[Text Decoration](https://tailwindcss.com/docs/text-decoration):** `underline`, `line-through`.
 * **[Text Transform](https://tailwindcss.com/docs/text-transform):** `uppercase`, `lowercase`, `capitalize`, `snakecase`, `normal-case`.
+* **[Margin](https://tailwindcss.com/docs/margin):** `m-{margin}`, `ml-{leftMargin}`, `mr-{rightMargin}`, `mt-{topMargin}`, `mb-{bottomMargin}`, `mx-{horizontalMargin}`, `my-{verticalMargin}`.
+* **[Padding](https://tailwindcss.com/docs/padding):** `p-{padding}`, `pl-{leftPadding}`, `pr-{rightPadding}`, `pt-{topPadding}`, `pb-{bottomPadding}`, `px-{horizontalPadding}`, `py-{verticalPadding}`.
 
 
 ## HTML Elements Supported
