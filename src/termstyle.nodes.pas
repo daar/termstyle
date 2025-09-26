@@ -287,147 +287,86 @@ begin
   end;
 end;
 
+type
+  TBoxSide = (bsTop, bsBottom, bsLeft, bsRight);
+  TBoxSides = set of TBoxSide;
+  TBoxTarget = (btPadding, btMargin);
+
+  TBoxRule = record
+    Prefix: string;
+    Target: TBoxTarget;
+    Sides: TBoxSides;
+  end;
+
+const
+  // Map prefix → sides and target
+  BoxRules: array[0..13] of TBoxRule = (
+    (Prefix: 'p-';  Target: btPadding; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
+    (Prefix: 'pt-'; Target: btPadding; Sides: [bsTop]),
+    (Prefix: 'pr-'; Target: btPadding; Sides: [bsRight]),
+    (Prefix: 'pb-'; Target: btPadding; Sides: [bsBottom]),
+    (Prefix: 'pl-'; Target: btPadding; Sides: [bsLeft]),
+    (Prefix: 'px-'; Target: btPadding; Sides: [bsLeft, bsRight]),
+    (Prefix: 'py-'; Target: btPadding; Sides: [bsTop, bsBottom]),
+
+    (Prefix: 'm-';  Target: btMargin; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
+    (Prefix: 'mt-'; Target: btMargin; Sides: [bsTop]),
+    (Prefix: 'mr-'; Target: btMargin; Sides: [bsRight]),
+    (Prefix: 'mb-'; Target: btMargin; Sides: [bsBottom]),
+    (Prefix: 'ml-'; Target: btMargin; Sides: [bsLeft]),
+    (Prefix: 'mx-'; Target: btMargin; Sides: [bsLeft, bsRight]),
+    (Prefix: 'my-'; Target: btMargin; Sides: [bsTop, bsBottom])
+  );
+
+var
+  PrefixMap: array of array of Integer; // optional O(1) mapping
+
 procedure THtmlNode.ParseBoxClass(const AClass: string);
 var
+  v: Integer;
   vstr: string;
-  v:    integer;
-
-  function TryParseValue(const S: string; out OutVal: integer): boolean;
-  begin
-    Result := TryStrToInt(S, OutVal);
-    // If you want to support other tokens (e.g. 'px', 'full'), handle them here.
-  end;
-
+  Box: PBoxSpacing;
+  Rule: ^TBoxRule;
 begin
-  // Padding: p-, pt-, pr-, pb-, pl-, px-, py-
-  if Copy(AClass, 1, 2) = 'p-' then
-  begin
-    vstr := Copy(AClass, 3, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Padding.Top := v;
-      Style.Padding.Bottom := v;
-      Style.Padding.Left := v;
-      Style.Padding.Right := v;
-    end;
-    Exit;
+  // Quick prefix matching
+  Rule := nil;
+  case AClass[1] of
+    'p':  // padding prefixes
+      case AClass[2] of
+        '-': Rule := @BoxRules[0];
+        't': Rule := @BoxRules[1];
+        'r': Rule := @BoxRules[2];
+        'b': Rule := @BoxRules[3];
+        'l': Rule := @BoxRules[4];
+        'x': Rule := @BoxRules[5];
+        'y': Rule := @BoxRules[6];
+      end;
+    'm':  // margin prefixes
+      case AClass[2] of
+        '-': Rule := @BoxRules[7];
+        't': Rule := @BoxRules[8];
+        'r': Rule := @BoxRules[9];
+        'b': Rule := @BoxRules[10];
+        'l': Rule := @BoxRules[11];
+        'x': Rule := @BoxRules[12];
+        'y': Rule := @BoxRules[13];
+      end;
   end;
 
-  if Copy(AClass, 1, 3) = 'pt-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Padding.Top := v;
-    Exit;
-  end;
+  if Rule = nil then Exit;
 
-  if Copy(AClass, 1, 3) = 'pr-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Padding.Right := v;
-    Exit;
-  end;
+  vstr := Copy(AClass, Length(Rule^.Prefix) + 1, MaxInt);
+  if not TryStrToInt(vstr, v) then Exit;
 
-  if Copy(AClass, 1, 3) = 'pb-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Padding.Bottom := v;
-    Exit;
-  end;
+  if Rule^.Target = btPadding then
+    Box := @Style.Padding
+  else
+    Box := @Style.Margin;
 
-  if Copy(AClass, 1, 3) = 'pl-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Padding.Left := v;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'px-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Padding.Left := v;
-      Style.Padding.Right := v;
-    end;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'py-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Padding.Top := v;
-      Style.Padding.Bottom := v;
-    end;
-    Exit;
-  end;
-
-  // Margin: m-, mt-, mr-, mb-, ml-, mx-, my-
-  if Copy(AClass, 1, 2) = 'm-' then
-  begin
-    vstr := Copy(AClass, 3, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Margin.Top := v;
-      Style.Margin.Bottom := v;
-      Style.Margin.Left := v;
-      Style.Margin.Right := v;
-    end;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'mt-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Margin.Top := v;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'mr-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Margin.Right := v;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'mb-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Margin.Bottom := v;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'ml-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then Style.Margin.Left := v;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'mx-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Margin.Left := v;
-      Style.Margin.Right := v;
-    end;
-    Exit;
-  end;
-
-  if Copy(AClass, 1, 3) = 'my-' then
-  begin
-    vstr := Copy(AClass, 4, MaxInt);
-    if TryParseValue(vstr, v) then
-    begin
-      Style.Margin.Top := v;
-      Style.Margin.Bottom := v;
-    end;
-    Exit;
-  end;
-
-  // If additional shorthand like 'p-0' or 'm-0' exists, it's already covered above.
+  if bsTop in Rule^.Sides then Box^.Top := v;
+  if bsBottom in Rule^.Sides then Box^.Bottom := v;
+  if bsLeft in Rule^.Sides then Box^.Left := v;
+  if bsRight in Rule^.Sides then Box^.Right := v;
 end;
 
 function StripAnsi(const S: string): string;
@@ -461,85 +400,91 @@ end;
 function THtmlNode.Render: string;
 var
   i: integer;
-  Inner, Line, PaddedLine: string;
+  Line: string;
+  Inner: string = '';
   innerLength: integer;
-  Padded: string;
 begin
   // Render children
-  Inner := '';
   for i := 0 to Children.Count - 1 do
     Inner += THtmlNode(Children[i]).Render;
 
   // Calculate length in characters of the inner text (no ANSI)
   innerLength := Length(StripAnsi(Inner));
 
+  Result := '';
+
   // Apply padding (inside the box, using node’s own style)
-  Padded := '';
 
   // Top padding lines
   for i := 1 to Style.Padding.Top do
-    Padded +=
+    Result +=
       Style.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      StringOfChar('t', innerLength + Style.Padding.Left + Style.Padding.Right) +
       RESET_SEQ + 
       sLineBreak;
 
   // Content lines with left/right padding
-  for Line in Inner.Split([sLineBreak]) do
+  for Line in Result.Split([sLineBreak]) do
   begin
-    PaddedLine :=
+    if Style.Padding.Left > 0 then
+      Result +=
+        Style.ToAnsi +
+        StringOfChar('l', Style.Padding.Left);  // left padding
+
+    Result += Line;
+
+    if Style.Padding.Right > 0 then
+    Result +=
       Style.ToAnsi +
-      StringOfChar(' ', Style.Padding.Left) +  // left padding
-      Line +
-      Style.ToAnsi +
-      StringOfChar(' ', Style.Padding.Right) + // right padding
+      StringOfChar('r', Style.Padding.Right) + // right padding
       RESET_SEQ;
-    Padded += PaddedLine + sLineBreak;
   end;
 
   // Bottom padding lines
   for i := 1 to Style.Padding.Bottom do
-    Padded +=
+    Result +=
+      sLineBreak +
       Style.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
-      RESET_SEQ + 
-      sLineBreak;
-
-  // Replace Inner with padded version
-  Inner := Padded;
+      StringOfChar('b', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      RESET_SEQ;
 
   // Apply margin (outside box, using parent’s style)
-  Result := '';
 
   // Top margin
   for i := 1 to Style.Margin.Top do
     Result +=
       Style.Parent.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      StringOfChar('T', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
       RESET_SEQ + 
       sLineBreak;
 
   // Content lines with margins
-  for Line in Inner.Split([sLineBreak]) do
+  for Line in Result.Split([sLineBreak]) do
   begin
     if Line <> '' then
-      Result +=
-        Style.Parent.ToAnsi +
-        StringOfChar(' ', Style.Margin.Left) +
-        Line +
-        Style.Parent.ToAnsi +
-        StringOfChar(' ', Style.Margin.Right) +
-        RESET_SEQ +
-        sLineBreak;
+    begin
+      if Style.Margin.Left > 0 then
+        Result +=
+          Style.Parent.ToAnsi +
+          StringOfChar('L', Style.Margin.Left);
+
+      Result += Line;
+
+      if Style.Margin.Right > 0 then
+        Result +=
+          Style.Parent.ToAnsi +
+          StringOfChar('R', Style.Margin.Right) +
+          RESET_SEQ;
+    end;
   end;
 
   // Bottom margin
   for i := 1 to Style.Margin.Bottom do
     Result +=
+      sLineBreak +
       Style.Parent.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
-      RESET_SEQ +
-      sLineBreak;
+      StringOfChar('B', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      RESET_SEQ;
 end;
 
 function THtmlNode.GetEnumerator: TClassEnumerator;

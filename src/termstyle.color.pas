@@ -17,6 +17,7 @@ type
   TTextTransform = (ttNormalCase, ttUppercase, ttLowercase, ttCapitalize, ttSnakeCase);
 
   // Spacing
+  PBoxSpacing = ^TBoxSpacing;
   TBoxSpacing = record
     Top, Right, Bottom, Left: integer;
   end;
@@ -66,7 +67,6 @@ type
   { TTextStyle }
 
   // Main text style class
-  PTextStyle = ^TTextStyle;
   TTextStyle = class
   public
     Parent: TTextStyle;
@@ -390,8 +390,6 @@ constructor TTextStyle.Create;
 begin
   inherited Create;
 
-  //FG := THtmlColor.None;
-  //BG := THtmlColor.None;
   Attrs := [];
 
   Transform := ttNormalCase;
