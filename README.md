@@ -68,6 +68,7 @@ All the classes supported use exactly the same logic that is available on [tailw
 * **[Text Transform](https://tailwindcss.com/docs/text-transform):** `uppercase`, `lowercase`, `capitalize`, `snakecase`, `normal-case`.
 * **[Margin](https://tailwindcss.com/docs/margin):** `m-{margin}`, `ml-{leftMargin}`, `mr-{rightMargin}`, `mt-{topMargin}`, `mb-{bottomMargin}`, `mx-{horizontalMargin}`, `my-{verticalMargin}`.
 * **[Padding](https://tailwindcss.com/docs/padding):** `p-{padding}`, `pl-{leftPadding}`, `pr-{rightPadding}`, `pt-{topPadding}`, `pb-{bottomPadding}`, `px-{horizontalPadding}`, `py-{verticalPadding}`.
+* **[List Style](https://tailwindcss.com/docs/list-style-type):** `list-disc`, `list-decimal`, `list-square`, `list-none`.
 
 
 ## HTML Elements Supported
@@ -156,4 +157,47 @@ render(
     'This is a CLI app built with <s>TermStyle</s>.' +
     '</p>'
   );
+```
+### `<ul>`
+
+The `<ul>` element can be used for an unordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception. 
+
+**Default Styles**: `list-disc`
+
+```pascal
+render(
+    '<ul>' + 
+    '    <li>Item 1</li>' + 
+    '    <li>Item 2</li>' + 
+    '</ul>'
+);
+```
+
+### `<ol>`
+
+The `<ol>` element can be used for an ordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception. 
+
+**Default Styles**: `list-decimal`
+
+```pascal
+render(
+    '<ol>' + 
+    '    <li>Item 1</li>' + 
+    '    <li>Item 2</li>' + 
+    '</ol>'
+);
+```
+
+### `<li>`
+
+The `<li>` element can be used as a list item. It should only be used as a child of `<ul>` and `<ol>` elements.
+
+**Default Styles**: `list-decimal`
+
+```pascal
+render
+    '<ul>' + 
+    '    <li>Item 1</li>' + 
+    '</ul>'
+);
 ```

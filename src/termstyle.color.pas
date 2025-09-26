@@ -23,7 +23,7 @@ type
   end;
 
   // List styles
-  TListStyle = (lsNone, lsDisc, lsDecimal, lsSquare);
+  TListStyle = (lsNone, lsDisc, lsDecimal);
 
   // Enumerate all ANSI attributes you care about
   TAnsiAttrEnum = (

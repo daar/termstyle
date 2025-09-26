@@ -121,6 +121,25 @@ type
     constructor Create(const AClass: string);
   end;
 
+  { THtmlUl }
+
+  THtmlUl = class(THtmlNode)
+  public
+    constructor Create(const AClass: string);
+    function Render: string; override;
+  end;
+
+  { THtmlOl }
+
+  THtmlOl = class(THtmlUl)
+  public
+    constructor Create(const AClass: string);
+  end;
+
+  { THtmlLi }
+
+  THtmlLi = class(THtmlNode);
+
 function CreateNodeFromElement(Node: TDOMNode): THtmlNode;
 procedure TraverseNode(Node: TDOMNode; ParentHtmlNode: THtmlNode);
 
@@ -228,6 +247,7 @@ begin
 
   //TODO: optimization possible to parse all classes more effectively
   //      possibly replace these functions by a style class??
+  //TODO: move the following code to TTextStyle.Create
   for SingleClass in Self do
   begin
     AnsiCodeForClass(lowercase(SingleClass));
@@ -318,14 +338,11 @@ const
     (Prefix: 'my-'; Target: btMargin; Sides: [bsTop, bsBottom])
   );
 
-var
-  PrefixMap: array of array of Integer; // optional O(1) mapping
-
 procedure THtmlNode.ParseBoxClass(const AClass: string);
 var
-  v: Integer;
+  v:    integer;
   vstr: string;
-  Box: PBoxSpacing;
+  Box:  PBoxSpacing;
   Rule: ^TBoxRule;
 begin
   // Quick prefix matching
@@ -399,91 +416,93 @@ end;
 
 function THtmlNode.Render: string;
 var
-  i: integer;
-  Line: string;
-  Inner: string = '';
+  i:      integer;
+  Inner, Line, PaddedLine: string;
   innerLength: integer;
+  Padded: string;
 begin
   // Render children
+  Inner := '';
   for i := 0 to Children.Count - 1 do
     Inner += THtmlNode(Children[i]).Render;
 
   // Calculate length in characters of the inner text (no ANSI)
   innerLength := Length(StripAnsi(Inner));
 
-  Result := '';
-
   // Apply padding (inside the box, using node’s own style)
+  Padded := '';
 
   // Top padding lines
   for i := 1 to Style.Padding.Top do
-    Result +=
+    Padded +=
       Style.ToAnsi +
-      StringOfChar('t', innerLength + Style.Padding.Left + Style.Padding.Right) +
-      RESET_SEQ + 
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      RESET_SEQ +
       sLineBreak;
 
   // Content lines with left/right padding
-  for Line in Result.Split([sLineBreak]) do
+  for Line in Inner.Split([sLineBreak]) do
   begin
-    if Style.Padding.Left > 0 then
-      Result +=
-        Style.ToAnsi +
-        StringOfChar('l', Style.Padding.Left);  // left padding
+    // start a fresh padded line
+    PaddedLine := '';
 
-    Result += Line;
-
-    if Style.Padding.Right > 0 then
-    Result +=
+    // If left padding exists, emit parent ANSI then left spaces (no reset)
+    PaddedLine +=
       Style.ToAnsi +
-      StringOfChar('r', Style.Padding.Right) + // right padding
-      RESET_SEQ;
+      StringOfChar(' ', Style.Padding.Left) +
+      Line;
+
+    // If right padding exists, re-apply parent ANSI (child may have reset it)
+    if Style.Padding.Right > 0 then
+      PaddedLine += Style.ToAnsi + StringOfChar(' ', Style.Padding.Right);
+
+    // Close parent style only if we opened it for left/right padding
+    if (Style.Padding.Left > 0) or (Style.Padding.Right > 0) then
+      PaddedLine += RESET_SEQ;
+
+    // append newline for this padded line
+    Padded += PaddedLine;
   end;
 
   // Bottom padding lines
   for i := 1 to Style.Padding.Bottom do
-    Result +=
+    Padded +=
       sLineBreak +
       Style.ToAnsi +
-      StringOfChar('b', innerLength + Style.Padding.Left + Style.Padding.Right) +
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
       RESET_SEQ;
 
+  // Replace Inner with padded version
+  Inner := Padded;
+
   // Apply margin (outside box, using parent’s style)
+  Result := '';
 
   // Top margin
   for i := 1 to Style.Margin.Top do
     Result +=
       Style.Parent.ToAnsi +
-      StringOfChar('T', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
-      RESET_SEQ + 
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      RESET_SEQ +
       sLineBreak;
 
   // Content lines with margins
-  for Line in Result.Split([sLineBreak]) do
-  begin
+  for Line in Inner.Split([sLineBreak]) do
     if Line <> '' then
-    begin
-      if Style.Margin.Left > 0 then
-        Result +=
-          Style.Parent.ToAnsi +
-          StringOfChar('L', Style.Margin.Left);
-
-      Result += Line;
-
-      if Style.Margin.Right > 0 then
-        Result +=
-          Style.Parent.ToAnsi +
-          StringOfChar('R', Style.Margin.Right) +
-          RESET_SEQ;
-    end;
-  end;
+      Result +=
+        Style.Parent.ToAnsi + 
+        StringOfChar(' ', Style.Margin.Left) +
+        Line + 
+        Style.Parent.ToAnsi + 
+        StringOfChar(' ', Style.Margin.Right) +
+        RESET_SEQ;
 
   // Bottom margin
   for i := 1 to Style.Margin.Bottom do
     Result +=
       sLineBreak +
-      Style.Parent.ToAnsi +
-      StringOfChar('B', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
+      Style.Parent.ToAnsi + 
+      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) + 
       RESET_SEQ;
 end;
 
@@ -528,7 +547,9 @@ begin
   // Wrap the rendered children in the OSC 8 escape sequence for hyperlinks
   Result :=
     #27']8;;' + Href + #7 +  // start hyperlink
+    Style.ToAnsi +
     childRendered +          // rendered children (text + styled content)
+    RESET_SEQ +
     #27']8;;'#7;             // end hyperlink
 end;
 
@@ -573,6 +594,81 @@ begin
   inherited Create(AClass);
 
   Include(Style.Attrs, taItalic);
+end;
+
+function ParseListStyle(const AClass: string; const ADefault: TListStyle): TListStyle;
+var
+  ClassLower: string;
+begin
+  ClassLower := LowerCase(AClass);
+
+  if Pos('list-disc', ClassLower) > 0 then
+    Result := lsDisc
+  else if Pos('list-decimal', ClassLower) > 0 then
+    Result := lsDecimal
+  else
+    Result := ADefault;
+end;
+
+{ THtmlUl }
+
+constructor THtmlUl.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Style.ListStyle := ParseListStyle(AClass, lsDisc);
+end;
+
+function THtmlUl.Render: string;
+var
+  i:      integer;
+  LiNode: THtmlLi;
+  Number: integer;
+  Prefix: string;
+begin
+  Result := '';
+  Number := 1; // Start numbering from 1
+
+  // Determine prefix based on ListStyle
+  case Style.ListStyle of
+    lsDisc: Prefix := '• ';
+    lsDecimal: Prefix := '';
+    else
+      Prefix := '';
+  end;
+
+  for i := 0 to Children.Count - 1 do
+    if Children[i] is THtmlLi then
+    begin
+      LiNode := THtmlLi(Children[i]);
+
+      // Set dynamic prefix for this LI
+      if LiNode.Style.ListStyle = lsDecimal then
+        Result += 
+          LiNode.Style.ToAnsi + 
+          IntToStr(Number) + '. ' + 
+          THtmlNode(LiNode.Children[0]).Render + 
+          sLineBreak
+      else
+        Result += 
+          LiNode.Style.ToAnsi + 
+          Prefix + 
+          THtmlNode(LiNode.Children[0]).Render + 
+          sLineBreak;
+
+      Inc(Number);
+    end
+    else
+      raise Exception.Create('List tags can only contain <li> elements');
+  end;
+
+{ THtmlOl }
+
+constructor THtmlOl.Create(const AClass: string);
+begin
+  inherited Create(AClass);
+
+  Style.ListStyle := ParseListStyle(AClass, lsDecimal);
 end;
 
 { THtmlText }
@@ -634,7 +730,13 @@ begin
   else if lowercase(Elem.TagName) = 'i' then
     Result := THtmlI.Create('')
   else if lowercase(Elem.TagName) = 'em' then
-    Result := THtmlI.Create('');
+    Result := THtmlI.Create('')
+  else if lowercase(Elem.TagName) = 'ol' then
+    Result := THtmlOl.Create((string(Elem.GetAttribute('class'))))
+  else if lowercase(Elem.TagName) = 'ul' then
+    Result := THtmlUl.Create((string(Elem.GetAttribute('class'))))
+  else if lowercase(Elem.TagName) = 'li' then
+    Result := THtmlLi.Create((string(Elem.GetAttribute('class'))));
 
   // Unknown tags → return nil, so TraverseNode will treat them as literal text
 end;
