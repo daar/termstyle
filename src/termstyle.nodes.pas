@@ -321,7 +321,7 @@ type
 const
   // Map prefix → sides and target
   BoxRules: array[0..13] of TBoxRule = (
-    (Prefix: 'p-';  Target: btPadding; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
+    (Prefix: 'p-'; Target: btPadding; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
     (Prefix: 'pt-'; Target: btPadding; Sides: [bsTop]),
     (Prefix: 'pr-'; Target: btPadding; Sides: [bsRight]),
     (Prefix: 'pb-'; Target: btPadding; Sides: [bsBottom]),
@@ -329,14 +329,14 @@ const
     (Prefix: 'px-'; Target: btPadding; Sides: [bsLeft, bsRight]),
     (Prefix: 'py-'; Target: btPadding; Sides: [bsTop, bsBottom]),
 
-    (Prefix: 'm-';  Target: btMargin; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
+    (Prefix: 'm-'; Target: btMargin; Sides: [bsTop, bsBottom, bsLeft, bsRight]),
     (Prefix: 'mt-'; Target: btMargin; Sides: [bsTop]),
     (Prefix: 'mr-'; Target: btMargin; Sides: [bsRight]),
     (Prefix: 'mb-'; Target: btMargin; Sides: [bsBottom]),
     (Prefix: 'ml-'; Target: btMargin; Sides: [bsLeft]),
     (Prefix: 'mx-'; Target: btMargin; Sides: [bsLeft, bsRight]),
     (Prefix: 'my-'; Target: btMargin; Sides: [bsTop, bsBottom])
-  );
+    );
 
 procedure THtmlNode.ParseBoxClass(const AClass: string);
 var
@@ -416,94 +416,141 @@ end;
 
 function THtmlNode.Render: string;
 var
-  i:      integer;
+  i: integer;
   Inner, Line, PaddedLine: string;
-  innerLength: integer;
-  Padded: string;
+  InnerLines: TStringArray;
+  ContentWidth, PaddedWidth, w: integer;
+  PaddedLines: array of string;
+  ParentAnsi: string;
 begin
   // Render children
   Inner := '';
   for i := 0 to Children.Count - 1 do
     Inner += THtmlNode(Children[i]).Render;
 
-  // Calculate length in characters of the inner text (no ANSI)
-  innerLength := Length(StripAnsi(Inner));
+  // Split into lines and compute widest content width (no ANSI)
+  InnerLines := Inner.Split([sLineBreak]);
+  ContentWidth := 0;
+  for i := 0 to High(InnerLines) do
+  begin
+    w := Length(StripAnsi(InnerLines[i]));
+    if w > ContentWidth then ContentWidth := w;
+  end;
 
-  // Apply padding (inside the box, using node’s own style)
-  Padded := '';
+  // Build padded lines array
+  SetLength(PaddedLines, 0);
 
-  // Top padding lines
+  // Top padding (each line uses this node's style)
   for i := 1 to Style.Padding.Top do
-    Padded +=
-      Style.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
-      RESET_SEQ +
-      sLineBreak;
+  begin
+    SetLength(PaddedLines, Length(PaddedLines) + 1);
+    PaddedLines[High(PaddedLines)] :=
+      Style.ToAnsi + StringOfChar(' ', ContentWidth + Style.Padding.Left +
+      Style.Padding.Right) + RESET_SEQ;
+  end;
 
   // Content lines with left/right padding
-  for Line in Inner.Split([sLineBreak]) do
+  for i := 0 to High(InnerLines) do
   begin
-    // start a fresh padded line
     PaddedLine := '';
 
-    // If left padding exists, emit parent ANSI then left spaces (no reset)
-    PaddedLine +=
-      Style.ToAnsi +
-      StringOfChar(' ', Style.Padding.Left) +
-      Line;
+    // LEFT padding: only emit node style if left padding > 0
+    if Style.Padding.Left > 0 then
+    begin
+      PaddedLine +=
+        Style.ToAnsi + 
+        StringOfChar(' ', Style.Padding.Left);
 
-    // If right padding exists, re-apply parent ANSI (child may have reset it)
+        // Append the already-rendered child line (may contain its own ANSI)
+      PaddedLine += InnerLines[i];
+    end
+    else
+      PaddedLine := Style.ToAnsi + InnerLines[i] + RESET_SEQ;
+
+    // RIGHT padding: re-apply node style only if right padding > 0
     if Style.Padding.Right > 0 then
-      PaddedLine += Style.ToAnsi + StringOfChar(' ', Style.Padding.Right);
+      PaddedLine += 
+        Style.ToAnsi + 
+        StringOfChar(' ', Style.Padding.Right);
 
-    // Close parent style only if we opened it for left/right padding
+    // Close node style only when we opened it for padding
     if (Style.Padding.Left > 0) or (Style.Padding.Right > 0) then
       PaddedLine += RESET_SEQ;
 
-    // append newline for this padded line
-    Padded += PaddedLine;
+    // Always add a newline per content line (previous bug: it was conditional)
+    SetLength(PaddedLines, Length(PaddedLines) + 1);
+    PaddedLines[High(PaddedLines)] := PaddedLine;
   end;
 
-  // Bottom padding lines
+  // Bottom padding
   for i := 1 to Style.Padding.Bottom do
-    Padded +=
-      sLineBreak +
-      Style.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right) +
+  begin
+    SetLength(PaddedLines, Length(PaddedLines) + 1);
+    PaddedLines[High(PaddedLines)] :=
+      Style.ToAnsi + 
+      StringOfChar(' ', ContentWidth + Style.Padding.Left + Style.Padding.Right) + 
       RESET_SEQ;
+  end;
 
-  // Replace Inner with padded version
-  Inner := Padded;
+  // Apply margin using parent style (guard if parent is nil)
+  if Assigned(Style.Parent) then
+    ParentAnsi := Style.Parent.ToAnsi
+  else
+    ParentAnsi := '';
 
-  // Apply margin (outside box, using parent’s style)
+  // compute the padded content width (strip ANSI from each padded line)
+  PaddedWidth := 0;
+  for i := 0 to High(PaddedLines) do
+  begin
+    w := Length(StripAnsi(PaddedLines[i]));
+    if w > PaddedWidth then PaddedWidth := w;
+  end;
+
+  // Build final Result: top margin lines, padded lines with left/right margin, bottom margin
   Result := '';
 
-  // Top margin
+  // top margin
   for i := 1 to Style.Margin.Top do
-    Result +=
-      Style.Parent.ToAnsi +
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) +
-      RESET_SEQ +
+    Result += 
+      ParentAnsi + 
+      StringOfChar(' ', Style.Margin.Left + PaddedWidth + Style.Margin.Right) + 
+      RESET_SEQ + 
       sLineBreak;
 
-  // Content lines with margins
-  for Line in Inner.Split([sLineBreak]) do
-    if Line <> '' then
-      Result +=
-        Style.Parent.ToAnsi + 
-        StringOfChar(' ', Style.Margin.Left) +
-        Line + 
-        Style.Parent.ToAnsi + 
-        StringOfChar(' ', Style.Margin.Right) +
+  // content lines with margins
+  for i := 0 to High(PaddedLines) do
+  begin
+    Line := '';
+
+    if Style.Margin.Left > 0 then
+      Line += 
+        ParentAnsi + 
+        StringOfChar(' ', Style.Margin.Left);
+
+    Line += PaddedLines[i];
+
+    if Style.Margin.Right > 0 then
+      Line += 
+        ParentAnsi + 
+        StringOfChar(' ', Style.Margin.Right) + 
         RESET_SEQ;
 
-  // Bottom margin
+    Result += Line + sLineBreak;
+  end;
+
+  // bottom margin
   for i := 1 to Style.Margin.Bottom do
-    Result +=
-      sLineBreak +
-      Style.Parent.ToAnsi + 
-      StringOfChar(' ', innerLength + Style.Padding.Left + Style.Padding.Right + Style.Margin.Left + Style.Margin.Right) + 
-      RESET_SEQ;
+    Result += 
+      ParentAnsi + 
+      StringOfChar(' ', Style.Margin.Left + PaddedWidth + Style.Margin.Right) + 
+      RESET_SEQ + 
+      sLineBreak;
+
+  // Trim final trailing newline (if present)
+  if (Length(Result) >= Length(sLineBreak)) and
+    (Copy(Result, Length(Result) - Length(sLineBreak) + 1, Length(sLineBreak)) =
+    sLineBreak) then
+    Delete(Result, Length(Result) - Length(sLineBreak) + 1, Length(sLineBreak));
 end;
 
 function THtmlNode.GetEnumerator: TClassEnumerator;
@@ -547,9 +594,9 @@ begin
   // Wrap the rendered children in the OSC 8 escape sequence for hyperlinks
   Result :=
     #27']8;;' + Href + #7 +  // start hyperlink
-    Style.ToAnsi +
+    Style.ToAnsi + 
     childRendered +          // rendered children (text + styled content)
-    RESET_SEQ +
+    RESET_SEQ + 
     #27']8;;'#7;             // end hyperlink
 end;
 
@@ -644,15 +691,15 @@ begin
 
       // Set dynamic prefix for this LI
       if LiNode.Style.ListStyle = lsDecimal then
-        Result += 
+        Result +=
           LiNode.Style.ToAnsi + 
-          IntToStr(Number) + '. ' + 
+          IntToStr(Number) + '. ' +
           THtmlNode(LiNode.Children[0]).Render + 
           sLineBreak
       else
-        Result += 
+        Result +=
           LiNode.Style.ToAnsi + 
-          Prefix + 
+          Prefix +
           THtmlNode(LiNode.Children[0]).Render + 
           sLineBreak;
 
@@ -660,7 +707,7 @@ begin
     end
     else
       raise Exception.Create('List tags can only contain <li> elements');
-  end;
+end;
 
 { THtmlOl }
 
