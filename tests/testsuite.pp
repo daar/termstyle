@@ -109,16 +109,16 @@ uses
 
   procedure test_margin;
   begin
-    assert_equal('m-4',
-      '    Text with margin',
-      render('<div class="m-4">Text with margin</div>'));
+    assert_equal('m-2',
+      #$1B'[48;2;254;240;138m'#$1B'[48;2;254;240;138m                    '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;254;240;138m                    '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;254;240;138m  '#$1B'[48;2;22;163;74mText with margin'#$1B'[0m'#$1B'[48;2;254;240;138m  '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;254;240;138m                    '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;254;240;138m                    '#$1B'[0m'#$1B'[0m',
+      render('<div class="bg-yellow-200"><div class="bg-green-600 m-2">Text with margin</div></div>'));
   end;
 
   procedure test_padding;
   begin
     assert_equal('p-2',
-      '  Text with padding  ',
-      render('<div class="p-2">Text with padding</div>'));
+    #$1B'[48;2;254;240;138m'#$1B'[48;2;22;163;74m                     '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;22;163;74m                     '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;22;163;74m  Text with padding'#$1B'[48;2;22;163;74m  '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;22;163;74m                     '#$1B'[0m'#$1B'[0m'#$0A#$1B'[48;2;254;240;138m'#$1B'[48;2;22;163;74m                     '#$1B'[0m'#$1B'[0m',
+    render('<div class="bg-yellow-200"><div class="bg-green-600 p-2">Text with padding</div></div>'));
   end;
 
   procedure test_space;
@@ -216,7 +216,7 @@ uses
   procedure test_a;
   begin
     assert_equal('<a>',
-      'This is a CLI app built with TermStyle. '#$1B'[38;2;59;130;246m'#$1B']8;;/'#$07'Click here to open'#$1B']8;;'#$07,
+      'This is a CLI app built with TermStyle. '#$1B']8;;/'#$07#$1B'[38;2;59;130;246mClick here to open'#$1B'[0m'#$1B']8;;'#$07,
       render('This is a CLI app built with TermStyle. <a href="/">Click here to open</a>'));
   end;
 
@@ -299,9 +299,6 @@ uses
 
   { Main }
 begin
-  writeln(render('<div class="m-2 text-blue-200 bg-blue-700 bold">Hello</div>'));
-  exit;
-
   start_tests;
 
   start_unit('Classes');
