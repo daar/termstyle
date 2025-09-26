@@ -43,7 +43,7 @@ begin
       Stream.Free;
     end;
 
-    RootHtmlNode := THtmlBody.Create('');
+    RootHtmlNode := THtmlBody.Create;
     try
       // Traverse from the root
       TraverseNode(Doc.DocumentElement, RootHtmlNode);

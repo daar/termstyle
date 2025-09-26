@@ -9,10 +9,22 @@ uses
   SysUtils;
 
 const
-  ESC = #27 + '[';
-  RESET_SEQ = ESC + '0m';
+  ESC = #27;
+  RESET_SEQ = ESC + '[0m';
 
 type
+  // Text transforms
+  TTextTransform = (ttNormalCase, ttUppercase, ttLowercase, ttCapitalize, ttSnakeCase);
+
+  // Spacing
+  PBoxSpacing = ^TBoxSpacing;
+  TBoxSpacing = record
+    Top, Right, Bottom, Left: integer;
+  end;
+
+  // List styles
+  TListStyle = (lsNone, lsDisc, lsDecimal);
+
   // Enumerate all ANSI attributes you care about
   TAnsiAttrEnum = (
     taBold,        // 1
@@ -54,10 +66,33 @@ type
 
   { TTextStyle }
 
-  TTextStyle = object
-    FG: THtmlColor;
-    BG: THtmlColor;
+  // Main text style class
+  TTextStyle = class
+  public
+    Parent: TTextStyle;
+
+    // Text colors
+    FG, BG: THtmlColor;
+
+    // Attributes (bold, underline, etc.)
     Attrs: TAnsiAttr;
+
+    // Text transforms
+    Transform: TTextTransform;
+
+    // Box model
+    Margin, Padding: TBoxSpacing;
+
+    // Lists
+    ListStyle: TListStyle;
+
+    // Visibility
+    Visible: boolean;
+
+    constructor Create;
+    procedure Assign(Source: TTextStyle);
+    procedure MergeFrom(ParentStyle: TTextStyle);
+    function ToAnsi: string;
   end;
 
 implementation
@@ -347,6 +382,100 @@ begin
     else
       raise Exception.Create('Unknown ClassName ' + lowercase(name));
   end;
+end;
+
+{ TTextStyle }
+
+constructor TTextStyle.Create;
+begin
+  inherited Create;
+
+  Attrs := [];
+
+  Transform := ttNormalCase;
+
+  Margin := Default(TBoxSpacing);
+  Padding := Default(TBoxSpacing);
+
+  ListStyle := lsNone;
+
+  Visible := True;
+end;
+
+procedure TTextStyle.Assign(Source: TTextStyle);
+begin
+  if not Assigned(Source) then Exit;
+
+  FG := Source.FG;
+  BG := Source.BG;
+  Attrs := Source.Attrs;
+
+  Transform := Source.Transform;
+
+  Margin := Source.Margin;
+  Padding := Source.Padding;
+
+  ListStyle := Source.ListStyle;
+
+  Visible := Source.Visible;
+end;
+
+procedure TTextStyle.MergeFrom(ParentStyle: TTextStyle);
+begin
+  if not Assigned(ParentStyle) then Exit;
+
+  Parent := ParentStyle;
+
+  // Merge only when not already set
+  if not FG.Assigned and ParentStyle.FG.Assigned then FG := ParentStyle.FG;
+  if not BG.Assigned and ParentStyle.BG.Assigned then BG := ParentStyle.BG;
+
+  Attrs := Attrs + ParentStyle.Attrs;
+
+  if Transform = ttNormalCase then Transform := ParentStyle.Transform;
+
+  if Padding.Top = 0 then Padding.Top := ParentStyle.Padding.Top;
+  if Padding.Right = 0 then Padding.Right := ParentStyle.Padding.Right;
+  if Padding.Bottom = 0 then Padding.Bottom := ParentStyle.Padding.Bottom;
+  if Padding.Left = 0 then Padding.Left := ParentStyle.Padding.Left;
+
+  if ListStyle = lsNone then ListStyle := ParentStyle.ListStyle;
+
+  Visible := ParentStyle.Visible;
+end;
+
+function TTextStyle.ToAnsi: string;
+var
+  AnsiCode: string;
+  Attr:     TAnsiAttrEnum;
+begin
+  AnsiCode := '';
+
+  for Attr in Attrs do
+  begin
+    if AnsiCode <> '' then
+      AnsiCode += ';';
+    AnsiCode += AnsiAttrCode[Attr];
+  end;
+
+  if FG.Assigned then
+  begin
+    if AnsiCode <> '' then
+      AnsiCode += ';';
+    AnsiCode += Format('38;2;%d;%d;%d', [FG.Red, FG.Green, FG.Blue]);
+  end;
+
+  if BG.Assigned then
+  begin
+    if AnsiCode <> '' then
+      AnsiCode += ';';
+    AnsiCode += Format('48;2;%d;%d;%d', [BG.Red, BG.Green, BG.Blue]);
+  end;
+
+  if AnsiCode = '' then
+    Result := ''
+  else
+    Result := ESC + '[' + ANSIcode + 'm';
 end;
 
 end.
