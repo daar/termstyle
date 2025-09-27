@@ -251,14 +251,14 @@ uses
   procedure test_ul;
   begin
     assert_equal('<ul>',
-      '• Item 1'#10'• Item 2',
+      '• Item 1'#$0A'• Item 2'#$0A,
       render('<ul><li>Item 1</li><li>Item 2</li></ul>'));
   end;
 
   procedure test_ol;
   begin
     assert_equal('<ol>',
-      '1. Item 1'#10'2. Item 2',
+      '1. Item 1'#$0A'2. Item 2'#$0A,
       render('<ol><li>Item 1</li><li>Item 2</li></ol>'));
   end;
 
@@ -339,8 +339,8 @@ begin
     register_test('i', @test_i);
     register_test('s', @test_s);
     //register_test('br', @test_br);
-    //register_test('ul', @test_ul);
-    //register_test('ol', @test_ol);
+    register_test('ul', @test_ul);
+    register_test('ol', @test_ol);
     //register_test('dl', @test_dl);
     //register_test('hr', @test_hr);
     //register_test('table', @test_table);
