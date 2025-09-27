@@ -9,24 +9,24 @@ function render(const S: string): string;
 // Helper printing functions
 procedure error(const Msg: string; const AClasses: string = 'bg-red-700 text-red-100 font-bold');
 procedure success(const Msg: string; const AClasses: string = 'bg-green-700 text-green-100 font-bold');
-procedure warning(const Msg: string; const AClasses: string = 'bg-yellow-700 text-yellow-100 font-bold');
+procedure warning(const Msg: string; const AClasses: string = 'bg-yellow-300 text-yellow-700 font-bold');
 procedure info(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
 procedure banner(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
 
-function prompt(const Msg: string; const AClasses: string = 'text-fuchsia-500'): string;
+function prompt(const Msg, ADefault, AClasses: string; const SkipChar: string = ''): string;
 
 implementation
 
 uses
   Classes,
+  DOM_HTML,
   SAX_HTML,
   SysUtils,
-  DOM_HTML,
   TermStyle.Nodes;
 
 function render(const S: string): string;
 var
-  Doc: THTMLDocument;
+  Doc:    THTMLDocument;
   WrappedData: string;
   RootHtmlNode: THtmlBody;
   Stream: TStringStream;
@@ -85,7 +85,7 @@ end;
 
 procedure banner(const Msg: string; const AClasses: string);
 var
-  TotalWidth, Padding, i: integer;
+  TotalWidth, Padding, i:  integer;
   Line, OpenTag, CloseTag: string;
 begin
   OpenTag := '<span class="' + AClasses + '">';
@@ -119,11 +119,22 @@ begin
   writeln(render(OpenTag + Line + CloseTag));
 end;
 
-
-function prompt(const Msg: string; const AClasses: string): string;
+function prompt(const Msg, ADefault, AClasses: string;
+  const SkipChar: string = ''): string;
 begin
-  write(render('<div class="' + AClasses + '">' + Msg + '></div> '));
+  if SkipChar <> '' then
+    write(render(Format('<div class="%s">%s [%s, %s to skip] : </div> ', [AClasses, Msg, ADefault, SkipChar])))
+  else
+    write(render(Format('<div class="%s">%s [%s] : </div> ', [AClasses, Msg, ADefault])));
+
   ReadLn(Result);
+  Result := Trim(Result);
+
+  // Handle skip
+  if (SkipChar <> '') and SameText(Result, SkipChar) then
+    Result := '' // skip
+  else if (Result = '') and (ADefault <> '') then
+    Result := ADefault; // use default
 end;
 
 end.
