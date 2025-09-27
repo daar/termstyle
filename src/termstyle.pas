@@ -7,13 +7,13 @@ interface
 function render(const S: string): string;
 
 // Helper printing functions
-procedure error(const Msg: string);
-procedure success(const Msg: string);
-procedure warning(const Msg: string);
-procedure info(const Msg: string);
-procedure banner(const Title: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
+procedure error(const Msg: string; const AClasses: string = 'bg-red-700 text-red-100 font-bold');
+procedure success(const Msg: string; const AClasses: string = 'bg-green-700 text-green-100 font-bold');
+procedure warning(const Msg: string; const AClasses: string = 'bg-yellow-700 text-yellow-100 font-bold');
+procedure info(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
+procedure banner(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
 
-function prompt(const Msg: string): string;
+function prompt(const Msg: string; const AClasses: string = 'text-fuchsia-500'): string;
 
 implementation
 
@@ -59,31 +59,31 @@ end;
 
 { === Helper Functions === }
 
-procedure error(const Msg: string);
+procedure error(const Msg: string; const AClasses: string);
 begin
-  writeln(render('<div><div class="bg-red-700 text-red-100 font-bold"> ERROR </div> ' + Msg + '</div>'));
+  writeln(render('<div class="' + AClasses + '"> ERROR </div> ' + Msg));
   writeln;
 end;
 
-procedure success(const Msg: string);
+procedure success(const Msg: string; const AClasses: string);
 begin
-  writeln(render('<div><div class="bg-green-700 text-green-100 font-bold"> SUCCESS </div> ' + Msg + '</div>'));
+  writeln(render('<div class="' + AClasses + '"> SUCCESS </div> ' + Msg));
   writeln;
 end;
 
-procedure warning(const Msg: string);
+procedure warning(const Msg: string; const AClasses: string);
 begin
-  writeln(render('<div><div class="bg-yellow-700 text-yellow-100 font-bold"> WARNING </div> ' + Msg + '</div>'));
+  writeln(render('<div class="' + AClasses + '"> WARNING </div> ' + Msg));
   writeln;
 end;
 
-procedure info(const Msg: string);
+procedure info(const Msg: string; const AClasses: string);
 begin
-  writeln(render('<div class="bg-sky-700 text-sky-100 font-bold"> INFO </div> ' + Msg));
+  writeln(render('<div class="' + AClasses + '"> INFO </div> ' + Msg));
   writeln;
 end;
 
-procedure banner(const Title: string; const AClasses: string);
+procedure banner(const Msg: string; const AClasses: string);
 var
   TotalWidth, Padding, i: integer;
   Line, OpenTag, CloseTag: string;
@@ -92,10 +92,10 @@ begin
   CloseTag := '</span>';
 
   TotalWidth := 50; // total banner width
-  if Length(Title) >= TotalWidth then
+  if Length(Msg) >= TotalWidth then
     Padding := 0
   else
-    Padding := (TotalWidth - Length(Title)) div 2;
+    Padding := (TotalWidth - Length(Msg)) div 2;
 
   // Top line (spaces with background)
   Line := '';
@@ -103,11 +103,11 @@ begin
     Line := Line + ' ';
   writeln(render(OpenTag + Line + CloseTag));
 
-  // Title line, centered
+  // Msg line, centered
   Line := '';
   for i := 1 to Padding do
     Line := Line + ' ';
-  Line := Line + Title;
+  Line := Line + Msg;
   while Length(Line) < TotalWidth do
     Line := Line + ' ';
   writeln(render(OpenTag + Line + CloseTag));
@@ -120,9 +120,9 @@ begin
 end;
 
 
-function prompt(const Msg: string): string;
+function prompt(const Msg: string; const AClasses: string): string;
 begin
-  write(render('<div class="text-fuchsia-500">' + Msg + '></div> '));
+  write(render('<div class="' + AClasses + '">' + Msg + '></div> '));
   ReadLn(Result);
 end;
 

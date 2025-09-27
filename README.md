@@ -24,8 +24,8 @@ nova require daar/termstyle
 uses
   TermStyle;
 
-Writeln(parse('<div class="font-bold text-red">Important!</div>'));
-Writeln(parse('<div class="text-green-500 bg-gray-800">Green text on dark background</div>'));
+Writeln(render('<div class="font-bold text-red">Important!</div>'));
+Writeln(render('<div class="text-green-500 bg-gray-800">Green text on dark background</div>'));
 ````
 
 ### `prompt()`
@@ -33,7 +33,7 @@ Writeln(parse('<div class="text-green-500 bg-gray-800">Green text on dark backgr
 The `prompt()` function may be used to prompt the user with a question.
 
 ```pascal
-answer := prompt('What is your name?');
+function prompt(const Msg: string; const AClasses: string = 'text-fuchsia-500'): string;
 ```
 
 ### Message helpers
@@ -41,10 +41,11 @@ answer := prompt('What is your name?');
 TermStyle comes with ready-to-use helpers that print messages styled by their severity.
 
 ```pascal
-procedure error(const Msg: string);
-procedure success(const Msg: string);
-procedure warning(const Msg: string);
-procedure info(const Msg: string);
+procedure error(const Msg: string; const AClasses: string = 'bg-red-700 text-red-100 font-bold');
+procedure success(const Msg: string; const AClasses: string = 'bg-green-700 text-green-100 font-bold');
+procedure warning(const Msg: string; const AClasses: string = 'bg-yellow-700 text-yellow-100 font-bold');
+procedure info(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
+procedure banner(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
 ```
 
 ### `banner()`
