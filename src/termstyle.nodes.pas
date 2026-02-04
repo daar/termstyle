@@ -197,12 +197,17 @@ end;
 
 function HtmlDecode(const S: string): string;
 const
-  Entities: array[0..0] of record
+  Entities: array[0..5] of record
       name: string;
       char: string;
       end
   = (
-    (name: '&;'; char: '&')
+    (name: '&amp;'; char: '&'),
+    (name: '&lt;'; char: '<'),
+    (name: '&gt;'; char: '>'),
+    (name: '&quot;'; char: '"'),
+    (name: '&apos;'; char: ''''),
+    (name: '&nbsp;'; char: ' ')
     );
 var
   ResultStr: string;
@@ -345,6 +350,9 @@ var
   Box:  PBoxSpacing;
   Rule: ^TBoxRule;
 begin
+  // Guard against short strings
+  if Length(AClass) < 2 then Exit;
+
   // Quick prefix matching
   Rule := nil;
   case AClass[1] of
@@ -737,7 +745,8 @@ begin
     ttLowercase: Result := LowerCase(Text);
     ttCapitalize: Result := CapitalizeWords(Text);
     ttSnakeCase: Result := ToSnakeCase(Text);
-    ttNormalCase: Result := Text;
+  else
+    Result := Text;  // ttNormalCase and any other case
   end;
 
   // output text and render any children (children already inherit style via MergeFrom)

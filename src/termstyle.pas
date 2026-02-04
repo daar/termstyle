@@ -123,9 +123,11 @@ function prompt(const Msg, ADefault, AClasses: string;
   const SkipChar: string = ''): string;
 begin
   if SkipChar <> '' then
-    write(render(Format('<div class="%s">%s [%s, %s to skip] : </div> ', [AClasses, Msg, ADefault, SkipChar])))
+    write(render(Format('<span class="%s">%s</span> <span class="text-gray-400">[%s, %s to skip]</span> : ', [AClasses, Msg, ADefault, SkipChar])))
+  else if ADefault <> '' then
+    write(render(Format('<span class="%s">%s</span> <span class="text-gray-400">[%s]</span> : ', [AClasses, Msg, ADefault])))
   else
-    write(render(Format('<div class="%s">%s [%s] : </div> ', [AClasses, Msg, ADefault])));
+    write(render(Format('<span class="%s">%s</span> : ', [AClasses, Msg])));
 
   ReadLn(Result);
   Result := Trim(Result);

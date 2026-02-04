@@ -4,71 +4,89 @@ program example;
 
 uses
   SysUtils,
-  TermStyle;
+  TermStyle,
+  TermStyle.Prompts;
 
 var
-  name, choice: string;
-
-procedure ShowMenu;
-begin
-  writeln(render('  <div class="text-cyan-400">[1]</div> <div class="text-green-500">Run task</div>'));
-  writeln(render('  <div class="text-cyan-400">[2]</div> <div class="text-yellow-500">Show warning</div>'));
-  writeln(render('  <div class="text-cyan-400">[3]</div> <div class="text-red-500">Trigger error</div>'));
-  writeln(render('  <div class="text-cyan-400">[4]</div> <div class="text-fuchsia-500">Exit</div>'));
-end;
+  UserName: string;
+  Choice: integer;
+  Confirmed: boolean;
+  ProgressBar: TProgressBar;
+  i: integer;
 
 begin
-  // Big colorful banner
-  writeln(render('<div class="text-blue-400 font-bold">==================================================</div>'));
-  writeln(render('<div class="text-blue-400 font-bold">        🌟 Welcome to TermStyle CLI Demo 🌟        </div>'));
-  writeln(render('<div class="text-blue-400 font-bold">==================================================</div>'));
-  writeln;
-
   // Intro
-  info('This demo showcases colorful terminal styling, like Laravel Artisan.');
+  intro('TermStyle CLI Demo');
   writeln;
 
-  // User prompt
-  name := Prompt('What is your name');
-  success('Hello, <div class="font-bold underline">' + name + '</div>! Ready to begin?');
+  // User prompt with text input
+  UserName := text(
+    'What is your name?',
+    'Enter your name',
+    '',
+    'This will be used to greet you.'
+  );
+
+  writeln(render('<span class="text-green-500">Hello, </span><span class="text-cyan-500 font-bold">' + UserName + '</span><span class="text-green-500">!</span>'));
   writeln;
 
-  // Menu loop
+  // Menu loop using select
   repeat
-    banner('Main Menu', 'text-white bg-blue-400 font-bold');
-    ShowMenu;
-    writeln;
+    Choice := select(
+      'What would you like to do?',
+      ['Run task', 'Show warning', 'Trigger error', 'Exit'],
+      0,
+      'Use arrow keys or TAB to navigate'
+    );
 
-    choice := Prompt('Select option');
+    case Choice of
+      0: // Run task
+      begin
+        if confirm('Run the background task?', true) then
+        begin
+          writeln;
+          spin('Running background task...');
+          Sleep(1000);
+          spinStop(true, 'Task completed successfully!');
 
-    if choice = '1' then
-    begin
-      info('Running background task...');
-      Sleep(600); // simulate work
-      success('✨ Task finished successfully!');
-    end
-    else if choice = '2' then
-    begin
-      warning('⚠️  Disk space is almost full. Please clean up soon!');
-    end
-    else if choice = '3' then
-    begin
-      error('❌ Could not connect to database!');
-    end
-    else if choice = '4' then
-    begin
-      info('👋 Exiting the demo...');
-      Break;
-    end
-    else
-    begin
-      error('Invalid choice: ' + choice);
+          // Show progress bar demo
+          writeln;
+          ProgressBar := progress('Processing items', 50);
+          for i := 1 to 50 do
+          begin
+            Sleep(30);
+            ProgressBar.Advance(1);
+          end;
+          ProgressBar.Finish;
+          ProgressBar.Free;
+        end;
+      end;
+
+      1: // Show warning
+      begin
+        alert('Disk space is almost full. Please clean up soon!');
+      end;
+
+      2: // Trigger error
+      begin
+        writeln;
+        spin('Connecting to database...');
+        Sleep(800);
+        spinStop(false, 'Could not connect to database!');
+        writeln;
+      end;
+
+      3: // Exit
+      begin
+        Confirmed := confirm('Are you sure you want to exit?', false);
+        if not Confirmed then
+          Choice := -1; // Don't exit, continue loop
+      end;
     end;
 
     writeln;
-  until choice = '4';
+  until Choice = 3;
 
-  // Exit banner
-  banner('Thank you for using TermStyle!');
+  // Outro
+  outro('Thank you for using TermStyle, ' + UserName + '!');
 end.
-

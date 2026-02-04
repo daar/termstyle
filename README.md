@@ -24,38 +24,152 @@ nova require daar/termstyle
 uses
   TermStyle;
 
-Writeln(render('<div class="font-bold text-red">Important!</div>'));
-Writeln(render('<div class="text-green-500 bg-gray-800">Green text on dark background</div>'));
-````
-
-### `prompt()`
-
-The `prompt()` function may be used to prompt the user with a question.
-
-```pascal
-function prompt(const Msg: string; const AClasses: string = 'text-fuchsia-500'): string;
+writeln(render('<div class="font-bold text-red">Important!</div>'));
+writeln(render('<div class="text-green-500 bg-gray-800">Green text on dark background</div>'));
 ```
 
-### Message helpers
+## Interactive Prompts
+
+The `TermStyle.Prompts` unit provides beautiful, interactive command-line prompts.
+
+```pascal
+uses
+  TermStyle.Prompts;
+```
+
+### `text()`
+
+Text input with placeholder, default value, and hint support.
+
+```pascal
+name := text(
+  'What is your name?',
+  'John Doe',           // placeholder
+  '',                   // default value
+  'Enter your full name' // hint
+);
+```
+
+### `suggest()`
+
+Text input with autocomplete suggestions. Use TAB to complete, arrow keys to cycle suggestions.
+
+```pascal
+country := suggest(
+  'What country are you from?',
+  ['Australia', 'Austria', 'Belgium', 'Brazil', 'Canada'],
+  'Start typing...'
+);
+```
+
+### `password()`
+
+Password input with hidden characters (displayed as asterisks).
+
+```pascal
+pwd := password(
+  'Enter your password',
+  'Min 8 characters',
+  'Your password will be encrypted'
+);
+```
+
+### `confirm()`
+
+Yes/No confirmation prompt.
+
+```pascal
+if confirm('Do you want to continue?', true) then
+  // proceed...
+```
+
+### `select()`
+
+Single selection from a list of options. Navigate with arrow keys or TAB, confirm with Enter.
+
+```pascal
+choice := select(
+  'Choose a framework',
+  ['Option A', 'Option B', 'Option C'],
+  0,  // default selection index
+  'Use arrow keys to navigate'
+);
+```
+
+### `multiselect()`
+
+Multiple selection from a list. Navigate with arrow keys, toggle with Space, confirm with Enter.
+
+```pascal
+features := multiselect(
+  'Select features to enable',
+  ['Auth', 'API', 'Queue', 'Scheduler'],
+  'Space to toggle, Enter to confirm',
+  true  // required (at least one)
+);
+```
+
+### `pause()`
+
+Wait for user to press Enter.
+
+```pascal
+pause('Press ENTER to continue...');
+```
+
+### Informational Output
+
+```pascal
+intro('My CLI Application');   // Section header: ┌─ My CLI Application
+outro('Goodbye!');             // Section footer: └─ Goodbye!
+note('Additional information'); // Note line
+alert('Important warning!');    // Yellow alert box
+```
+
+### Progress Indicators
+
+```pascal
+// Spinner
+spin('Loading...');
+Sleep(1000);
+spinStop(true, 'Done!');  // true = success, false = failure
+
+// Progress bar
+bar := progress('Downloading', 100);
+for i := 1 to 100 do
+begin
+  Sleep(20);
+  bar.Advance(1);
+end;
+bar.Finish;
+bar.Free;
+```
+
+### `table()`
+
+Display data in a formatted table.
+
+```pascal
+table(
+  ['Name', 'Email'],
+  [
+    ['John', 'john@example.com'],
+    ['Jane', 'jane@example.com']
+  ]
+);
+```
+
+## Message Helpers
 
 TermStyle comes with ready-to-use helpers that print messages styled by their severity.
 
 ```pascal
-procedure error(const Msg: string; const AClasses: string = 'bg-red-700 text-red-100 font-bold');
-procedure success(const Msg: string; const AClasses: string = 'bg-green-700 text-green-100 font-bold');
-procedure warning(const Msg: string; const AClasses: string = 'bg-yellow-700 text-yellow-100 font-bold');
-procedure info(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
-procedure banner(const Msg: string; const AClasses: string = 'bg-sky-700 text-sky-100 font-bold');
+error('Something went wrong!');
+success('Operation completed!');
+warning('Disk space is low');
+info('Processing...');
+banner('Welcome', 'text-white bg-blue-400 font-bold');
 ```
-
-### `banner()`
-
-The `banner()` function may be used to show a banner on screen with a custom HTML formatting.
-
-```pascal
-banner('TERMSTYLE DEMO CLI', 'text-white bg-blue-400 font-bold'); 
-```
-
 
 ## Classes Supported
 
@@ -161,30 +275,30 @@ render(
 ```
 ### `<ul>`
 
-The `<ul>` element can be used for an unordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception. 
+The `<ul>` element can be used for an unordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception.
 
 **Default Styles**: `list-disc`
 
 ```pascal
 render(
-    '<ul>' + 
-    '    <li>Item 1</li>' + 
-    '    <li>Item 2</li>' + 
+    '<ul>' +
+    '    <li>Item 1</li>' +
+    '    <li>Item 2</li>' +
     '</ul>'
 );
 ```
 
 ### `<ol>`
 
-The `<ol>` element can be used for an ordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception. 
+The `<ol>` element can be used for an ordered list. It can only accept `<li>` elements as childs, if there is another element provided it will throw an `InvalidChild` exception.
 
 **Default Styles**: `list-decimal`
 
 ```pascal
 render(
-    '<ol>' + 
-    '    <li>Item 1</li>' + 
-    '    <li>Item 2</li>' + 
+    '<ol>' +
+    '    <li>Item 1</li>' +
+    '    <li>Item 2</li>' +
     '</ol>'
 );
 ```
@@ -193,12 +307,10 @@ render(
 
 The `<li>` element can be used as a list item. It should only be used as a child of `<ul>` and `<ol>` elements.
 
-**Default Styles**: `list-decimal`
-
 ```pascal
-render
-    '<ul>' + 
-    '    <li>Item 1</li>' + 
+render(
+    '<ul>' +
+    '    <li>Item 1</li>' +
     '</ul>'
 );
 ```
