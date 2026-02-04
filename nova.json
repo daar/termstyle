@@ -1,13 +1,12 @@
 {
   "name" : "daar/termstyle",
-  "version" : "0.3.0",
   "license" : "MIT",
-  "author" : "Darius Blaszyk <dhkblaszyk@gmail.com>",
   "description" : "Colorful and styled terminal output for Free Pascal",
-  "require" : {},
-  "require-dev" : {
-    "daar/taplib" : "^0.0"
-  },
-  "bin" : [
+  "type" : "library",
+  "authors" : [
+    {
+      "name" : "Darius Blaszyk",
+      "email" : "dhkblaszyk@gmail.com"
+    }
   ]
 }
