@@ -171,6 +171,52 @@ info('Processing...');
 banner('Welcome', 'text-white bg-blue-400 font-bold');
 ```
 
+### `banner()`
+
+The `banner()` function may be used to show a banner on screen with a custom HTML formatting.
+
+```pascal
+banner('TERMSTYLE DEMO CLI', 'text-white bg-blue-400 font-bold');
+```
+
+### Diff Output
+
+TermStyle provides functions for rendering colored diff output, similar to `git diff`.
+
+```pascal
+// Render a complete unified diff
+diff_file(UnifiedDiffString);
+
+// Or build diff output manually
+diff_header('diff --git a/file.pas b/file.pas');
+diff_hunk('@@ -1,6 +1,6 @@');
+diff_del(1, 'old line');
+diff_add(1, 'new line');
+diff_context(2, 'unchanged line');
+```
+
+**Available functions:**
+
+| Function | Description |
+|----------|-------------|
+| `diff_header(FileName)` | Renders file header (gray background) |
+| `diff_hunk(Range)` | Renders hunk header like `@@ -1,6 +1,6 @@` (cyan) |
+| `diff_add(LineNum, Text)` | Renders added line (green background, `+` prefix) |
+| `diff_del(LineNum, Text)` | Renders deleted line (red background, `-` prefix) |
+| `diff_context(LineNum, Text)` | Renders context/unchanged line (gray text) |
+| `diff_file(UnifiedDiff)` | Parses and renders a complete unified diff string |
+
+**Example output:**
+
+```
+diff --git a/example.pas b/example.pas
+@@ -1,3 +1,3 @@
+   1   program example;
+   2 - writeln('Hello');
+   2 + writeln('Hello, World!');
+   3   end.
+```
+
 ## Classes Supported
 
 All the classes supported use exactly the same logic that is available on [tailwindcss.com/docs](https://tailwindcss.com/docs).

@@ -15,6 +15,14 @@ procedure banner(const Msg: string; const AClasses: string = 'bg-sky-700 text-sk
 
 function prompt(const Msg, ADefault, AClasses: string; const SkipChar: string = ''): string;
 
+// Diff output functions
+procedure diff_header(const FileName: string);
+procedure diff_hunk(const Range: string);
+procedure diff_add(const LineNum: integer; const Text: string);
+procedure diff_del(const LineNum: integer; const Text: string);
+procedure diff_context(const LineNum: integer; const Text: string);
+procedure diff_file(const UnifiedDiff: string);
+
 implementation
 
 uses
@@ -137,6 +145,116 @@ begin
     Result := '' // skip
   else if (Result = '') and (ADefault <> '') then
     Result := ADefault; // use default
+end;
+
+{ === Diff Functions === }
+
+procedure diff_header(const FileName: string);
+begin
+  writeln(render('<span class="bg-gray-200 text-gray-700 font-bold"> ' + FileName + ' </span>'));
+end;
+
+procedure diff_hunk(const Range: string);
+begin
+  writeln(render('<span class="text-cyan-500">' + Range + '</span>'));
+end;
+
+procedure diff_add(const LineNum: integer; const Text: string);
+var
+  LineNumStr: string;
+begin
+  LineNumStr := Format('%4d', [LineNum]);
+  writeln(render(
+    '<span class="text-gray-500">' + LineNumStr + '</span>' +
+    '<span class="bg-green-100 text-green-700"> + ' + Text + '</span>'
+  ));
+end;
+
+procedure diff_del(const LineNum: integer; const Text: string);
+var
+  LineNumStr: string;
+begin
+  LineNumStr := Format('%4d', [LineNum]);
+  writeln(render(
+    '<span class="text-gray-500">' + LineNumStr + '</span>' +
+    '<span class="bg-red-100 text-red-700"> - ' + Text + '</span>'
+  ));
+end;
+
+procedure diff_context(const LineNum: integer; const Text: string);
+var
+  LineNumStr: string;
+begin
+  LineNumStr := Format('%4d', [LineNum]);
+  writeln(render(
+    '<span class="text-gray-500">' + LineNumStr + '</span>' +
+    '<span class="text-gray-600">   ' + Text + '</span>'
+  ));
+end;
+
+procedure diff_file(const UnifiedDiff: string);
+var
+  Lines: TStringList;
+  i, OldLine, NewLine: integer;
+  Line: string;
+begin
+  Lines := TStringList.Create;
+  try
+    Lines.Text := UnifiedDiff;
+    OldLine := 0;
+    NewLine := 0;
+
+    for i := 0 to Lines.Count - 1 do
+    begin
+      Line := Lines[i];
+
+      if Length(Line) = 0 then
+        continue;
+
+      // File headers
+      if (Copy(Line, 1, 4) = 'diff') or
+         (Copy(Line, 1, 3) = '---') or
+         (Copy(Line, 1, 3) = '+++') then
+      begin
+        diff_header(Line);
+      end
+      // Hunk header
+      else if Copy(Line, 1, 2) = '@@' then
+      begin
+        diff_hunk(Line);
+        // Parse line numbers from @@ -old,count +new,count @@
+        // Simple extraction - find the +number
+        OldLine := 1;
+        NewLine := 1;
+      end
+      // Added line
+      else if Line[1] = '+' then
+      begin
+        Inc(NewLine);
+        diff_add(NewLine, Copy(Line, 2, Length(Line) - 1));
+      end
+      // Deleted line
+      else if Line[1] = '-' then
+      begin
+        Inc(OldLine);
+        diff_del(OldLine, Copy(Line, 2, Length(Line) - 1));
+      end
+      // Context line
+      else if Line[1] = ' ' then
+      begin
+        Inc(OldLine);
+        Inc(NewLine);
+        diff_context(NewLine, Copy(Line, 2, Length(Line) - 1));
+      end
+      else
+      begin
+        // Other lines (like "\ No newline at end of file")
+        writeln(render('<span class="text-gray-400">' + Line + '</span>'));
+      end;
+    end;
+  finally
+    Lines.Free;
+  end;
 end;
 
 end.
